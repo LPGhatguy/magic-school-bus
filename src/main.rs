@@ -3,17 +3,14 @@ extern crate crossterm;
 use std::{
     env,
     fs,
-    thread,
     path::{Path, PathBuf},
-    io::{Read, Bytes},
-    time::{Instant, Duration},
 };
 
 use crossterm::{
     style::{Color, style},
     terminal::ClearType,
+    TerminalInput,
     Crossterm,
-    AsyncReader,
     Screen,
 };
 
@@ -24,7 +21,7 @@ struct FileEntry {
 }
 
 struct State<'a> {
-    input: Bytes<AsyncReader>,
+    input: TerminalInput<'a>,
     crossterm: &'a Crossterm,
     screen: &'a Screen,
 
@@ -125,14 +122,14 @@ fn paint(state: &State) {
 
     cursor.hide();
 
-    cursor.goto(0, 0);
-    style("--------------------").with(Color::White).on(Color::Black).paint(state.screen);
-
     let item_count_clamped = state.entries.len().min(height as usize - 4);
+
+    cursor.goto(0, 0);
+    style("-".repeat(width as usize)).paint(state.screen);
 
     cursor.goto(0, 1);
     let gutter = "|\n".repeat(item_count_clamped);
-    style(gutter).with(Color::White).on(Color::Black).paint(state.screen);
+    style(gutter).paint(state.screen);
 
     for (index, entry) in state.entries.iter().enumerate() {
         if index >= item_count_clamped {
@@ -145,35 +142,30 @@ fn paint(state: &State) {
 
         if index == state.selected_entry {
             styled = styled.with(Color::Black).on(Color::White);
-        } else {
-            styled = styled.with(Color::White).on(Color::Black);
         }
 
         styled.paint(state.screen);
     }
 
     cursor.goto(0, 1 + state.entries.len() as u16);
-    style("--------------------").with(Color::White).on(Color::Black).paint(state.screen);
+    style("-".repeat(width as usize)).paint(state.screen);
 
     cursor.goto(0, height - 2);
     style("-".repeat(width as usize)).with(Color::White).on(Color::Black).paint(state.screen);
     cursor.goto(0, height - 1);
     terminal.clear(ClearType::CurrentLine);
-    style(format!("Last action: {:?}", state.last_action))
-        .with(Color::White).on(Color::Black).paint(state.screen);
+    style(format!("Last action: {:?}", state.last_action)).paint(state.screen);
     cursor.goto(0, height);
-    style("-".repeat(width as usize)).with(Color::White).on(Color::Black).paint(state.screen);
+    style("-".repeat(width as usize)).paint(state.screen);
 }
 
 fn process_input(state: &mut State) -> Option<Action> {
-    let pressed = state.input.next();
-
-    if let Some(Ok(key)) = pressed {
+    if let Ok(key) = state.input.read_char() {
         match key {
-            b'q' => Some(Action::Quit),
-            b'j' => Some(Action::Down),
-            b'k' => Some(Action::Up),
-            b'\r' => Some(Action::Select),
+            'q' => Some(Action::Quit),
+            'j' => Some(Action::Down),
+            'k' => Some(Action::Up),
+            '\r' => Some(Action::Select),
             _ => None,
         }
     } else {
@@ -186,10 +178,9 @@ fn main() {
     let alternate = screen.enable_alternate_modes(true).unwrap();
     let crossterm = Crossterm::new(&alternate.screen);
     let input = crossterm.input();
-    let stdin = input.read_async().bytes();
 
     let mut state = State {
-        input: stdin,
+        input,
         screen: &alternate.screen,
         crossterm: &crossterm,
         super_dirty: false,
@@ -201,10 +192,10 @@ fn main() {
     };
 
     state.set_working_directory(&env::current_dir().unwrap());
+    prepaint(&mut state);
+    paint(&state);
 
     loop {
-        let start_of_frame = Instant::now();
-
         if let Some(action) = process_input(&mut state) {
             state.process_action(action);
 
@@ -215,11 +206,5 @@ fn main() {
 
         prepaint(&mut state);
         paint(&state);
-
-        let processing_time = start_of_frame.elapsed();
-        match Duration::from_millis(33).checked_sub(processing_time) {
-            Some(difference) => thread::sleep(difference),
-            None => {},
-        }
     }
 }
