@@ -209,4 +209,10 @@ fn main() {
         prepaint(&mut state);
         paint(&state);
     }
+
+    let working_directory = state.working_directory.clone();
+
+    drop(alternate);
+
+    eprintln!("{}", working_directory.display());
 }
