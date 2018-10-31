@@ -6,6 +6,7 @@ use std::{
     env,
     fs,
     path::{Path, PathBuf},
+    process,
 };
 
 use crossterm::{
@@ -71,6 +72,16 @@ impl<'a> State<'a> {
         }
     }
 
+    pub fn open_file(&self, path: &Path) {
+        process::Command::new("subl")
+            .arg(path.display().to_string())
+            .stdout(process::Stdio::null())
+            .stdin(process::Stdio::null())
+            .stderr(process::Stdio::null())
+            .status()
+            .expect("Couldn't start process!");
+    }
+
     pub fn process_action(&mut self, action: Action) {
         self.last_action = Some(action);
 
@@ -90,6 +101,8 @@ impl<'a> State<'a> {
 
                 if entry.is_dir {
                     self.set_working_directory(&entry.path.clone());
+                } else {
+                    self.open_file(&entry.path);
                 }
             },
             _ => {},
