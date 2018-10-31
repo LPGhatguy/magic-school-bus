@@ -1,5 +1,7 @@
 extern crate crossterm;
 
+pub mod virtual_screen;
+
 use std::{
     env,
     fs,
