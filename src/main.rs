@@ -31,7 +31,7 @@ fn prepaint(state: &mut State) {
     }
 }
 
-fn paint(state: &State) {
+fn paint(state: &State, screen: &mut VirtualScreen) {
     let terminal = state.crossterm.terminal();
     let cursor = state.crossterm.cursor();
 
@@ -111,8 +111,9 @@ fn main() {
     };
 
     state.set_working_directory(&env::current_dir().unwrap());
-    prepaint(&mut state);
-    paint(&state);
+    // prepaint(&mut state);
+    paint(&state, &mut screen);
+    screen.commit(&mut state);
 
     loop {
         if let Some(action) = process_input(&mut state) {
@@ -123,8 +124,9 @@ fn main() {
             }
         }
 
-        prepaint(&mut state);
-        paint(&state);
+        // prepaint(&mut state);
+        paint(&state, &mut screen);
+        screen.commit(&mut state);
     }
 
     let working_directory = state.working_directory.clone();

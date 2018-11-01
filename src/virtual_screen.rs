@@ -65,6 +65,23 @@ impl VirtualScreenBuffer {
 
         self.data[x + y * self.height]
     }
+
+    pub fn write_str(&mut self, x: usize, y: usize, value: &str) {
+        let mut x = x;
+        for char in value.chars() {
+            if x >= self.width {
+                break;
+            }
+
+            self.set_block(x, y, Block {
+                fg: Color::White,
+                bg: Color::Black,
+                char,
+            });
+
+            x += 1;
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -83,6 +100,10 @@ impl VirtualScreen {
             visible: VirtualScreenBuffer::new(width, height),
             in_progress: VirtualScreenBuffer::new(width, height),
         }
+    }
+
+    pub fn write_str(&mut self, x: usize, y: usize, value: &str) {
+        self.in_progress.write_str(x, y, value);
     }
 
     pub fn commit(&mut self, state: &mut State) {
