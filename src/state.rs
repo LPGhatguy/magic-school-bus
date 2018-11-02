@@ -5,7 +5,6 @@ use std::{
 };
 
 use crossterm::{
-    TerminalInput,
     Crossterm,
     Screen,
 };
@@ -17,7 +16,6 @@ pub struct FileEntry {
 }
 
 pub struct State<'a> {
-    pub input: TerminalInput<'a>,
     pub crossterm: &'a Crossterm,
     pub screen: &'a Screen,
 

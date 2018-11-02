@@ -1,7 +1,8 @@
 extern crate crossterm;
 
-pub mod virtual_screen;
 pub mod state;
+pub mod terminal_context;
+pub mod virtual_screen;
 
 use std::{
     env,
@@ -16,14 +17,11 @@ use crossterm::{
 use crate::{
     state::{State, Action},
     virtual_screen::{Color, VirtualScreen},
+    terminal_context::TerminalContext,
 };
 
 fn paint(state: &State, screen: &mut VirtualScreen) {
-    let cursor = state.crossterm.cursor();
-
     let (width, height) = screen.get_size();
-
-    cursor.hide();
 
     let item_count_clamped = state.entries.len().min(height as usize - 4);
 
@@ -52,7 +50,8 @@ fn paint(state: &State, screen: &mut VirtualScreen) {
 }
 
 fn process_input(state: &mut State) -> Option<Action> {
-    if let Ok(key) = state.input.read_char() {
+    let input = state.crossterm.input();
+    if let Ok(key) = input.read_char() {
         match key {
             'q' => Some(Action::Quit),
             'j' => Some(Action::Down),
@@ -70,10 +69,13 @@ fn main() {
     let screen = Screen::default();
     let alternate = screen.enable_alternate_modes(true).unwrap();
     let crossterm = Crossterm::new(&alternate.screen);
-    let input = crossterm.input();
+
+    {
+        let cursor = crossterm.cursor();
+        cursor.hide();
+    }
 
     let mut state = State {
-        input,
         screen: &alternate.screen,
         crossterm: &crossterm,
         last_action: None,
@@ -103,7 +105,7 @@ fn main() {
             }
 
             if action == Action::DebugDumpVisible {
-                eprintln!("{}", screen.show_visible());
+                eprintln!("{}", screen.show_visible_buffer());
             }
         }
 

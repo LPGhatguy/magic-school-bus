@@ -127,50 +127,50 @@ struct Difference {
 
 #[derive(Debug)]
 pub struct VirtualScreen {
-    visible: VirtualScreenBuffer,
-    in_progress: VirtualScreenBuffer,
-    should_clear: bool,
+    visible_buffer: VirtualScreenBuffer,
+    active_buffer: VirtualScreenBuffer,
+    should_redraw_everything: bool,
 }
 
 impl VirtualScreen {
     pub fn new(width: usize, height: usize) -> VirtualScreen {
         VirtualScreen {
-            visible: VirtualScreenBuffer::new(width, height),
-            in_progress: VirtualScreenBuffer::new(width, height),
-            should_clear: false,
+            visible_buffer: VirtualScreenBuffer::new(width, height),
+            active_buffer: VirtualScreenBuffer::new(width, height),
+            should_redraw_everything: false,
         }
     }
 
-    pub fn show_visible(&self) -> String {
-        self.visible.show()
+    pub fn show_visible_buffer(&self) -> String {
+        self.visible_buffer.show()
     }
 
     pub fn write_str(&mut self, x: usize, y: usize, value: &str) {
-        self.in_progress.write_str(x, y, value);
+        self.active_buffer.write_str(x, y, value);
     }
 
     pub fn write_str_color(&mut self, x: usize, y: usize, value: &str, fg: Color, bg: Color) {
-        self.in_progress.write_str_color(x, y, value, fg, bg);
+        self.active_buffer.write_str_color(x, y, value, fg, bg);
     }
 
     pub fn get_size(&self) -> (usize, usize) {
-        (self.in_progress.width, self.in_progress.height)
+        (self.active_buffer.width, self.active_buffer.height)
     }
 
     pub fn resize(&mut self, width: usize, height: usize) {
-        self.visible = VirtualScreenBuffer::new(width, height);
-        self.in_progress = VirtualScreenBuffer::new(width, height);
-        self.should_clear = true;
+        self.visible_buffer = VirtualScreenBuffer::new(width, height);
+        self.active_buffer = VirtualScreenBuffer::new(width, height);
+        self.should_redraw_everything = true;
     }
 
-    fn commit_all(&mut self, state: &mut State) {
+    fn commit_whole_screen(&mut self, state: &mut State) {
         let cursor = state.crossterm.cursor();
         let mut buffer = String::new();
         let (width, height) = self.get_size();
 
         for y in 0..height {
             for x in 0..width {
-                let block = self.in_progress.get_block(x, y);
+                let block = self.active_buffer.get_block(x, y);
 
                 buffer.clear();
                 buffer.write_char(block.char).unwrap();
@@ -179,10 +179,10 @@ impl VirtualScreen {
             }
         }
 
-        self.visible = self.in_progress.clone();
+        self.visible_buffer = self.active_buffer.clone();
     }
 
-    fn commit_some(&mut self, state: &mut State, changes: &[Difference]) {
+    fn commit_changes(&mut self, state: &mut State, changes: &[Difference]) {
         let cursor = state.crossterm.cursor();
 
         for change in changes {
@@ -202,16 +202,16 @@ impl VirtualScreen {
             self.resize(term_width, term_height);
         }
 
-        self.in_progress.clear();
+        self.active_buffer.clear();
     }
 
     pub fn commit(&mut self, state: &mut State) {
         let terminal = state.crossterm.terminal();
 
-        if self.should_clear {
-            self.should_clear = false;
+        if self.should_redraw_everything {
+            self.should_redraw_everything = false;
             terminal.clear(crossterm::terminal::ClearType::All);
-            self.commit_all(state);
+            self.commit_whole_screen(state);
             return;
         }
 
@@ -221,11 +221,11 @@ impl VirtualScreen {
         let mut x = 0;
         let mut y = 0;
         loop {
-            let new_block = self.in_progress.get_block(x, y);
-            let old_block = self.visible.get_block(x, y);
+            let new_block = self.active_buffer.get_block(x, y);
+            let old_block = self.visible_buffer.get_block(x, y);
 
             if new_block != old_block {
-                self.visible.set_block(x, y, new_block);
+                self.visible_buffer.set_block(x, y, new_block);
 
                 let mut text = new_block.char.to_string();
 
@@ -233,19 +233,19 @@ impl VirtualScreen {
                 let change_y = y;
 
                 // Attempt to cluster contiguous text with the same colors in
-                // order to reduce the number of changes to write
+                // order to reduce the number of changes to the actual screen.
                 loop {
                     if x + 1 == width {
                         break;
                     }
 
-                    let next_block = self.in_progress.get_block(x + 1, y);
+                    let next_block = self.active_buffer.get_block(x + 1, y);
 
                     if next_block.fg != new_block.fg || next_block.bg != new_block.bg {
                         break;
                     }
 
-                    self.visible.set_block(x + 1, y, next_block);
+                    self.visible_buffer.set_block(x + 1, y, next_block);
                     text.push(next_block.char);
                     x += 1;
                 }
@@ -270,7 +270,7 @@ impl VirtualScreen {
             }
         }
 
-        self.commit_some(state, &changes);
+        self.commit_changes(state, &changes);
     }
 }
 
