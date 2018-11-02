@@ -97,6 +97,14 @@ impl VirtualScreenBuffer {
     }
 }
 
+struct Difference {
+    x: usize,
+    y: usize,
+    text: String,
+    fg: Color,
+    bg: Color,
+}
+
 #[derive(Debug)]
 pub struct VirtualScreen {
     visible: VirtualScreenBuffer,
@@ -150,15 +158,15 @@ impl VirtualScreen {
         self.visible = self.in_progress.clone();
     }
 
-    fn commit_some(&mut self, state: &mut State, changes: &[((usize, usize), Block)]) {
+    fn commit_some(&mut self, state: &mut State, changes: &[Difference]) {
         let cursor = state.crossterm.cursor();
-        let mut buffer = String::new();
 
-        for ((x, y), block) in changes {
-            buffer.clear();
-            buffer.write_char(block.char).unwrap();
-            cursor.goto(*x as u16, *y as u16);
-            crossterm::style(&buffer).with(block.fg.into()).on(block.bg.into()).paint(state.screen);
+        for change in changes {
+            cursor.goto(change.x as u16, change.y as u16);
+            crossterm::style(&change.text)
+                .with(change.fg.into())
+                .on(change.bg.into())
+                .paint(state.screen);
         }
     }
 
@@ -196,7 +204,14 @@ impl VirtualScreen {
 
             if new_value != old_value {
                 self.visible.set_block(x, y, new_value);
-                changes.push(((x, y), new_value));
+
+                changes.push(Difference {
+                    x,
+                    y,
+                    text: new_value.char.to_string(),
+                    fg: new_value.fg,
+                    bg: new_value.bg,
+                });
             }
 
             self.in_progress.set_block(x, y, Block::default());
