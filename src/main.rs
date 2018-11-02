@@ -86,14 +86,11 @@ fn main() {
         crossterm: &crossterm,
         last_action: None,
         working_directory: PathBuf::new(),
-        last_screen_size: (0, 0),
         entries: Vec::new(),
         selected_entry: 0,
     };
 
     let (width, height) = state.get_terminal_size();
-    state.last_screen_size = (width, height);
-
     let mut screen = VirtualScreen::new(width, height);
 
     state.set_working_directory(&env::current_dir().unwrap());

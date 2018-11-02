@@ -21,7 +21,6 @@ pub struct State<'a> {
 
     pub last_action: Option<Action>,
 
-    pub last_screen_size: (usize, usize),
     pub working_directory: PathBuf,
     pub entries: Vec<FileEntry>,
     pub selected_entry: usize,
