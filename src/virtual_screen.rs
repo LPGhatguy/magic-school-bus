@@ -2,7 +2,9 @@ use std::fmt::Write;
 
 use crossterm;
 
-use crate::state::State;
+use crate::{
+    terminal_context::TerminalContext,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Color {
@@ -163,8 +165,8 @@ impl VirtualScreen {
         self.should_redraw_everything = true;
     }
 
-    fn commit_whole_screen(&mut self, state: &mut State) {
-        let cursor = state.crossterm.cursor();
+    fn commit_whole_screen(&mut self, context: &TerminalContext) {
+        let cursor = context.crossterm.cursor();
         let mut buffer = String::new();
         let (width, height) = self.get_size();
 
@@ -175,27 +177,27 @@ impl VirtualScreen {
                 buffer.clear();
                 buffer.write_char(block.char).unwrap();
                 cursor.goto(x as u16, y as u16);
-                crossterm::style(&buffer).with(block.fg.into()).on(block.bg.into()).paint(state.screen);
+                crossterm::style(&buffer).with(block.fg.into()).on(block.bg.into()).paint(context.screen);
             }
         }
 
         self.visible_buffer = self.active_buffer.clone();
     }
 
-    fn commit_changes(&mut self, state: &mut State, changes: &[Difference]) {
-        let cursor = state.crossterm.cursor();
+    fn commit_changes(&mut self, context: &TerminalContext, changes: &[Difference]) {
+        let cursor = context.crossterm.cursor();
 
         for change in changes {
             cursor.goto(change.x as u16, change.y as u16);
             crossterm::style(&change.text)
                 .with(change.fg.into())
                 .on(change.bg.into())
-                .paint(state.screen);
+                .paint(context.screen);
         }
     }
 
-    pub fn prepaint(&mut self, state: &mut State) {
-        let (term_width, term_height) = state.get_terminal_size();
+    pub fn prepaint(&mut self, context: &TerminalContext) {
+        let (term_width, term_height) = context.get_terminal_size();
         let (width, height) = self.get_size();
 
         if term_width != width || term_height != height {
@@ -205,13 +207,13 @@ impl VirtualScreen {
         self.active_buffer.clear();
     }
 
-    pub fn commit(&mut self, state: &mut State) {
-        let terminal = state.crossterm.terminal();
+    pub fn commit(&mut self, context: &TerminalContext) {
+        let terminal = context.crossterm.terminal();
 
         if self.should_redraw_everything {
             self.should_redraw_everything = false;
             terminal.clear(crossterm::terminal::ClearType::All);
-            self.commit_whole_screen(state);
+            self.commit_whole_screen(context);
             return;
         }
 
@@ -270,7 +272,7 @@ impl VirtualScreen {
             }
         }
 
-        self.commit_changes(state, &changes);
+        self.commit_changes(context, &changes);
     }
 }
 

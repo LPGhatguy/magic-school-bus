@@ -49,8 +49,9 @@ fn paint(state: &State, screen: &mut VirtualScreen) {
     screen.write_str(0, height - 1, &full_width_line);
 }
 
-fn process_input(state: &mut State) -> Option<Action> {
-    let input = state.crossterm.input();
+fn process_input(context: &TerminalContext) -> Option<Action> {
+    let input = context.crossterm.input();
+
     if let Ok(key) = input.read_char() {
         match key {
             'q' => Some(Action::Quit),
@@ -75,6 +76,11 @@ fn main() {
         cursor.hide();
     }
 
+    let context = TerminalContext {
+        screen: &alternate.screen,
+        crossterm: &crossterm,
+    };
+
     let mut state = State {
         screen: &alternate.screen,
         crossterm: &crossterm,
@@ -92,12 +98,12 @@ fn main() {
 
     state.set_working_directory(&env::current_dir().unwrap());
 
-    screen.prepaint(&mut state);
+    screen.prepaint(&context);
     paint(&state, &mut screen);
-    screen.commit(&mut state);
+    screen.commit(&context);
 
     loop {
-        if let Some(action) = process_input(&mut state) {
+        if let Some(action) = process_input(&context) {
             state.process_action(action);
 
             if action == Action::Quit {
@@ -109,9 +115,9 @@ fn main() {
             }
         }
 
-        screen.prepaint(&mut state);
+        screen.prepaint(&context);
         paint(&state, &mut screen);
-        screen.commit(&mut state);
+        screen.commit(&context);
     }
 
     let working_directory = state.working_directory.clone();
