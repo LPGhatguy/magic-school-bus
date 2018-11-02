@@ -106,4 +106,6 @@ pub enum Action {
     Up,
     Down,
     Select,
+
+    DebugDumpVisible,
 }

@@ -58,6 +58,7 @@ fn process_input(state: &mut State) -> Option<Action> {
             'j' => Some(Action::Down),
             'k' => Some(Action::Up),
             '\r' => Some(Action::Select),
+            '[' => Some(Action::DebugDumpVisible),
             _ => None,
         }
     } else {
@@ -101,6 +102,10 @@ fn main() {
 
             if action == Action::Quit {
                 break;
+            }
+
+            if action == Action::DebugDumpVisible {
+                eprintln!("{}", screen.show_visible());
             }
         }
 

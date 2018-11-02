@@ -95,6 +95,19 @@ impl VirtualScreenBuffer {
             }
         }
     }
+
+    pub fn show(&self) -> String {
+        let mut output = String::new();
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                output.push(self.get_block(x, y).char);
+            }
+            output.push('\n');
+        }
+
+        output
+    }
 }
 
 struct Difference {
@@ -119,6 +132,10 @@ impl VirtualScreen {
             in_progress: VirtualScreenBuffer::new(width, height),
             should_clear: false,
         }
+    }
+
+    pub fn show_visible(&self) -> String {
+        self.visible.show()
     }
 
     pub fn write_str(&mut self, x: usize, y: usize, value: &str) {
@@ -199,18 +216,38 @@ impl VirtualScreen {
         let mut x = 0;
         let mut y = 0;
         loop {
-            let new_value = self.in_progress.get_block(x, y);
-            let old_value = self.visible.get_block(x, y);
+            let new_block = self.in_progress.get_block(x, y);
+            let old_block = self.visible.get_block(x, y);
 
-            if new_value != old_value {
-                self.visible.set_block(x, y, new_value);
+            if new_block != old_block {
+                self.visible.set_block(x, y, new_block);
+
+                let mut text = new_block.char.to_string();
+
+                // Attempt to cluster contiguous text with the same colors in
+                // order to reduce the number of changes to write
+                loop {
+                    if x + 1 == width {
+                        break;
+                    }
+
+                    let next_block = self.in_progress.get_block(x + 1, y);
+
+                    if next_block.fg != new_block.fg || next_block.bg != new_block.bg {
+                        break;
+                    }
+
+                    self.visible.set_block(x + 1, y, next_block);
+                    text.push(next_block.char);
+                    x += 1;
+                }
 
                 changes.push(Difference {
                     x,
                     y,
-                    text: new_value.char.to_string(),
-                    fg: new_value.fg,
-                    bg: new_value.bg,
+                    text,
+                    fg: new_block.fg,
+                    bg: new_block.bg,
                 });
             }
 
