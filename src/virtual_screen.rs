@@ -60,6 +60,13 @@ impl VirtualScreenBuffer {
         }
     }
 
+    pub fn copy_from(&mut self, other: &VirtualScreenBuffer) {
+        assert!(self.width == other.width);
+        assert!(self.height == other.height);
+
+        self.data.copy_from_slice(&other.data);
+    }
+
     pub fn set_block(&mut self, x: usize, y: usize, block: Block) {
         if x >= self.width || y >= self.height {
             panic!("Could not write ({}, {}) on screen size ({}, {})", x, y, self.width, self.height);
@@ -171,6 +178,7 @@ impl VirtualScreen {
         let (width, height) = self.get_size();
 
         for y in 0..height {
+            // TODO: Use same clustering algorithm to draw more quickly
             for x in 0..width {
                 let block = self.active_buffer.get_block(x, y);
 
@@ -181,7 +189,7 @@ impl VirtualScreen {
             }
         }
 
-        self.visible_buffer = self.active_buffer.clone();
+        self.visible_buffer.copy_from(&self.active_buffer);
     }
 
     fn commit_changes(&mut self, context: &TerminalContext, changes: &[Difference]) {
