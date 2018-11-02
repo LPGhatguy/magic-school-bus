@@ -52,6 +52,12 @@ impl VirtualScreenBuffer {
         }
     }
 
+    pub fn clear(&mut self) {
+        for i in 0..(self.width * self.height) {
+            self.data[i] = Block::default();
+        }
+    }
+
     pub fn set_block(&mut self, x: usize, y: usize, block: Block) {
         if x >= self.width || y >= self.height {
             panic!("Could not write ({}, {}) on screen size ({}, {})", x, y, self.width, self.height);
@@ -110,6 +116,7 @@ impl VirtualScreenBuffer {
     }
 }
 
+#[derive(Debug)]
 struct Difference {
     x: usize,
     y: usize,
@@ -188,16 +195,14 @@ impl VirtualScreen {
     }
 
     pub fn prepaint(&mut self, state: &mut State) {
-        let terminal = state.crossterm.terminal();
-        let (term_width, term_height) = {
-            let size = terminal.terminal_size();
-            (size.0 as usize, size.1 as usize)
-        };
+        let (term_width, term_height) = state.get_terminal_size();
         let (width, height) = self.get_size();
 
         if term_width != width || term_height != height {
             self.resize(term_width, term_height);
         }
+
+        self.in_progress.clear();
     }
 
     pub fn commit(&mut self, state: &mut State) {
@@ -224,6 +229,9 @@ impl VirtualScreen {
 
                 let mut text = new_block.char.to_string();
 
+                let change_x = x;
+                let change_y = y;
+
                 // Attempt to cluster contiguous text with the same colors in
                 // order to reduce the number of changes to write
                 loop {
@@ -243,15 +251,13 @@ impl VirtualScreen {
                 }
 
                 changes.push(Difference {
-                    x,
-                    y,
+                    x: change_x,
+                    y: change_y,
                     text,
                     fg: new_block.fg,
                     bg: new_block.bg,
                 });
             }
-
-            self.in_progress.set_block(x, y, Block::default());
 
             x += 1;
             if x == width {

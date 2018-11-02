@@ -46,9 +46,9 @@ fn paint(state: &State, screen: &mut VirtualScreen) {
     }
 
     screen.write_str(0, 1 + item_count_clamped, &full_width_line);
-    screen.write_str(0, height - 2, &full_width_line);
-    screen.write_str(0, height - 1, &format!("Last action: {:?}", state.last_action));
-    screen.write_str(0, height, &full_width_line);
+    screen.write_str(0, height - 3, &full_width_line);
+    screen.write_str(0, height - 2, &format!("Last action: {:?}", state.last_action));
+    screen.write_str(0, height - 1, &full_width_line);
 }
 
 fn process_input(state: &mut State) -> Option<Action> {
@@ -72,23 +72,21 @@ fn main() {
     let crossterm = Crossterm::new(&alternate.screen);
     let input = crossterm.input();
 
-    let (width, height) = {
-        let size = crossterm.terminal().terminal_size();
-        (size.0 as usize, size.1 as usize)
-    };
-
-    let mut screen = VirtualScreen::new(width, height);
-
     let mut state = State {
         input,
         screen: &alternate.screen,
         crossterm: &crossterm,
         last_action: None,
         working_directory: PathBuf::new(),
-        last_screen_size: (width, height),
+        last_screen_size: (0, 0),
         entries: Vec::new(),
         selected_entry: 0,
     };
+
+    let (width, height) = state.get_terminal_size();
+    state.last_screen_size = (width, height);
+
+    let mut screen = VirtualScreen::new(width, height);
 
     state.set_working_directory(&env::current_dir().unwrap());
 
