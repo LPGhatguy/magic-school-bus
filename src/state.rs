@@ -4,21 +4,13 @@ use std::{
     process,
 };
 
-use crossterm::{
-    Crossterm,
-    Screen,
-};
-
 pub struct FileEntry {
     pub is_dir: bool,
     pub display: String,
     pub path: PathBuf,
 }
 
-pub struct State<'a> {
-    pub crossterm: &'a Crossterm,
-    pub screen: &'a Screen,
-
+pub struct State {
     pub last_action: Option<Action>,
 
     pub working_directory: PathBuf,
@@ -26,7 +18,7 @@ pub struct State<'a> {
     pub selected_entry: usize,
 }
 
-impl<'a> State<'a> {
+impl State {
     pub fn set_working_directory(&mut self, path: &Path) {
         self.selected_entry = 0;
         self.working_directory = path.to_path_buf();
@@ -94,16 +86,6 @@ impl<'a> State<'a> {
             },
             _ => {},
         }
-    }
-
-    pub fn get_terminal_size(&self) -> (usize, usize) {
-        let terminal = self.crossterm.terminal();
-        let (term_width, term_height) = {
-            let size = terminal.terminal_size();
-            (size.0 as usize, size.1 as usize)
-        };
-
-        (term_width + 1, term_height + 1)
     }
 }
 

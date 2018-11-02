@@ -82,15 +82,13 @@ fn main() {
     };
 
     let mut state = State {
-        screen: &alternate.screen,
-        crossterm: &crossterm,
         last_action: None,
         working_directory: PathBuf::new(),
         entries: Vec::new(),
         selected_entry: 0,
     };
 
-    let (width, height) = state.get_terminal_size();
+    let (width, height) = context.get_terminal_size();
     let mut screen = VirtualScreen::new(width, height);
 
     state.set_working_directory(&env::current_dir().unwrap());
