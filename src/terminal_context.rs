@@ -1,14 +1,34 @@
 use crossterm::{
     Crossterm,
     Screen,
+    AlternateScreen,
 };
 
-pub struct TerminalContext<'a> {
-    pub crossterm: &'a Crossterm,
-    pub screen: &'a Screen,
+pub struct TerminalContext {
+    pub crossterm: Crossterm,
+
+    alternate_screen: AlternateScreen,
 }
 
-impl<'a> TerminalContext<'a> {
+impl TerminalContext {
+    pub fn init() -> TerminalContext {
+        let screen = Screen::default();
+        let alternate = screen.enable_alternate_modes(true).unwrap();
+        let crossterm = Crossterm::new(&alternate.screen);
+
+        let cursor = crossterm.cursor();
+        cursor.hide();
+
+        TerminalContext {
+            crossterm,
+            alternate_screen: alternate,
+        }
+    }
+
+    pub fn get_screen(&self) -> &Screen {
+        &self.alternate_screen.screen
+    }
+
     pub fn get_terminal_size(&self) -> (usize, usize) {
         let terminal = self.crossterm.terminal();
         let (term_width, term_height) = {

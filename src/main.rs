@@ -6,12 +6,6 @@ pub mod virtual_screen;
 
 use std::{
     env,
-    path::PathBuf,
-};
-
-use crossterm::{
-    Crossterm,
-    Screen,
 };
 
 use crate::{
@@ -20,7 +14,7 @@ use crate::{
     terminal_context::TerminalContext,
 };
 
-fn paint(state: &State, screen: &mut VirtualScreen) {
+fn render(state: &State, screen: &mut VirtualScreen) {
     let (width, height) = screen.get_size();
 
     let item_count_clamped = state.entries.len().min(height as usize - 4);
@@ -66,36 +60,21 @@ fn process_input(context: &TerminalContext) -> Option<Action> {
     }
 }
 
+fn draw(state: &State, context: &TerminalContext, screen: &mut VirtualScreen) {
+    screen.prepaint(context);
+    render(state, screen);
+    screen.commit(context);
+}
+
 fn main() {
-    let screen = Screen::default();
-    let alternate = screen.enable_alternate_modes(true).unwrap();
-    let crossterm = Crossterm::new(&alternate.screen);
-
-    {
-        let cursor = crossterm.cursor();
-        cursor.hide();
-    }
-
-    let context = TerminalContext {
-        screen: &alternate.screen,
-        crossterm: &crossterm,
-    };
-
-    let mut state = State {
-        last_action: None,
-        working_directory: PathBuf::new(),
-        entries: Vec::new(),
-        selected_entry: 0,
-    };
-
+    let context = TerminalContext::init();
+    let mut state = State::new();
     let (width, height) = context.get_terminal_size();
     let mut screen = VirtualScreen::new(width, height);
 
     state.set_working_directory(&env::current_dir().unwrap());
 
-    screen.prepaint(&context);
-    paint(&state, &mut screen);
-    screen.commit(&context);
+    draw(&state, &context, &mut screen);
 
     loop {
         if let Some(action) = process_input(&context) {
@@ -110,14 +89,10 @@ fn main() {
             }
         }
 
-        screen.prepaint(&context);
-        paint(&state, &mut screen);
-        screen.commit(&context);
+        draw(&state, &context, &mut screen);
     }
 
-    let working_directory = state.working_directory.clone();
+    drop(context);
 
-    drop(alternate);
-
-    eprintln!("{}", working_directory.display());
+    eprintln!("{}", state.working_directory.display());
 }

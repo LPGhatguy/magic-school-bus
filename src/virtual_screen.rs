@@ -177,7 +177,7 @@ impl VirtualScreen {
                 buffer.clear();
                 buffer.write_char(block.char).unwrap();
                 cursor.goto(x as u16, y as u16);
-                crossterm::style(&buffer).with(block.fg.into()).on(block.bg.into()).paint(context.screen);
+                crossterm::style(&buffer).with(block.fg.into()).on(block.bg.into()).paint(context.get_screen());
             }
         }
 
@@ -192,7 +192,7 @@ impl VirtualScreen {
             crossterm::style(&change.text)
                 .with(change.fg.into())
                 .on(change.bg.into())
-                .paint(context.screen);
+                .paint(context.get_screen());
         }
     }
 

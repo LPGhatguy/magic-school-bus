@@ -12,13 +12,21 @@ pub struct FileEntry {
 
 pub struct State {
     pub last_action: Option<Action>,
-
     pub working_directory: PathBuf,
     pub entries: Vec<FileEntry>,
     pub selected_entry: usize,
 }
 
 impl State {
+    pub fn new() -> State {
+        State {
+            last_action: None,
+            working_directory: PathBuf::new(),
+            entries: Vec::new(),
+            selected_entry: 0,
+        }
+    }
+
     pub fn set_working_directory(&mut self, path: &Path) {
         self.selected_entry = 0;
         self.working_directory = path.to_path_buf();
