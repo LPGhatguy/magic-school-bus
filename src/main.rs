@@ -25,11 +25,7 @@ fn render(state: &State, screen: &mut VirtualScreen) {
     screen.write_str(0, 0, &full_width_line);
     screen.write_str(0, 1, &gutter_line);
 
-    for (index, entry) in state.entries.iter().enumerate() {
-        if index >= item_count_clamped {
-            break;
-        }
-
+    for (index, entry) in state.entries.iter().take(item_count_clamped).enumerate() {
         if index == state.selected_entry {
             screen.write_str_color(2, 1 + index, &entry.display, Color::Black, Color::White);
         } else {
