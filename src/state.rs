@@ -21,10 +21,9 @@ pub struct State<'a> {
     pub crossterm: &'a Crossterm,
     pub screen: &'a Screen,
 
-    pub super_dirty: bool,
     pub last_action: Option<Action>,
 
-    pub last_screen_size: (u16, u16),
+    pub last_screen_size: (usize, usize),
     pub working_directory: PathBuf,
     pub entries: Vec<FileEntry>,
     pub selected_entry: usize,
@@ -32,8 +31,6 @@ pub struct State<'a> {
 
 impl<'a> State<'a> {
     pub fn set_working_directory(&mut self, path: &Path) {
-        self.super_dirty = true;
-
         self.selected_entry = 0;
         self.working_directory = path.to_path_buf();
         self.entries.clear();

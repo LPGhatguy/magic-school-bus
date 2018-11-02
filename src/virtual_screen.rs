@@ -36,7 +36,7 @@ impl Default for Block {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualScreenBuffer {
     width: usize,
     height: usize,
@@ -53,52 +53,63 @@ impl VirtualScreenBuffer {
     }
 
     pub fn set_block(&mut self, x: usize, y: usize, block: Block) {
-        assert!(x < self.width);
-        assert!(y < self.height);
+        if x >= self.width || y >= self.height {
+            panic!("Could not write ({}, {}) on screen size ({}, {})", x, y, self.width, self.height);
+        }
 
-        self.data[x + y * self.height] = block;
+        self.data[x + y * self.width] = block;
     }
 
     pub fn get_block(&self, x: usize, y: usize) -> Block {
-        assert!(x < self.width);
-        assert!(y < self.height);
+        if x >= self.width || y >= self.height {
+            panic!("Could not read ({}, {}) on screen size ({}, {})", x, y, self.width, self.height);
+        }
 
-        self.data[x + y * self.height]
+        self.data[x + y * self.width]
     }
 
     pub fn write_str(&mut self, x: usize, y: usize, value: &str) {
-        let mut x = x;
+        self.write_str_color(x, y, value, Color::White, Color::Black);
+    }
+
+    pub fn write_str_color(&mut self, start_x: usize, start_y: usize, value: &str, fg: Color, bg: Color) {
+        let mut x = start_x;
+        let mut y = start_y;
+
         for char in value.chars() {
-            if x >= self.width {
+            if x >= self.width || y >= self.height {
                 break;
             }
 
-            self.set_block(x, y, Block {
-                fg: Color::White,
-                bg: Color::Black,
-                char,
-            });
+            if char == '\n' {
+                y += 1;
+                x = start_x;
+            } else {
+                self.set_block(x, y, Block {
+                    fg,
+                    bg,
+                    char,
+                });
 
-            x += 1;
+                x += 1;
+            }
         }
     }
 }
 
 #[derive(Debug)]
 pub struct VirtualScreen {
-    width: usize,
-    height: usize,
     visible: VirtualScreenBuffer,
     in_progress: VirtualScreenBuffer,
+    should_clear: bool,
 }
 
 impl VirtualScreen {
     pub fn new(width: usize, height: usize) -> VirtualScreen {
         VirtualScreen {
-            width,
-            height,
             visible: VirtualScreenBuffer::new(width, height),
             in_progress: VirtualScreenBuffer::new(width, height),
+            should_clear: false,
         }
     }
 
@@ -106,32 +117,102 @@ impl VirtualScreen {
         self.in_progress.write_str(x, y, value);
     }
 
-    pub fn commit(&mut self, state: &mut State) {
-        // TODO: Check if screen size changed, repaint everything
+    pub fn write_str_color(&mut self, x: usize, y: usize, value: &str, fg: Color, bg: Color) {
+        self.in_progress.write_str_color(x, y, value, fg, bg);
+    }
 
-        let mut writes = Vec::new();
+    pub fn get_size(&self) -> (usize, usize) {
+        (self.in_progress.width, self.in_progress.height)
+    }
 
-        for y in 0..self.width {
-            for x in 0..self.height {
-                let new_value = self.in_progress.get_block(x, y);
-                let old_value = self.visible.get_block(x, y);
+    pub fn resize(&mut self, width: usize, height: usize) {
+        self.visible = VirtualScreenBuffer::new(width, height);
+        self.in_progress = VirtualScreenBuffer::new(width, height);
+        self.should_clear = true;
+    }
 
-                if new_value != old_value {
-                    self.visible.set_block(x, y, new_value);
-                    writes.push(((x, y), new_value));
-                }
+    fn commit_all(&mut self, state: &mut State) {
+        let cursor = state.crossterm.cursor();
+        let mut buffer = String::new();
+        let (width, height) = self.get_size();
+
+        for y in 0..height {
+            for x in 0..width {
+                let block = self.in_progress.get_block(x, y);
+
+                buffer.clear();
+                buffer.write_char(block.char).unwrap();
+                cursor.goto(x as u16, y as u16);
+                crossterm::style(&buffer).with(block.fg.into()).on(block.bg.into()).paint(state.screen);
             }
         }
 
+        self.visible = self.in_progress.clone();
+    }
+
+    fn commit_some(&mut self, state: &mut State, changes: &[((usize, usize), Block)]) {
         let cursor = state.crossterm.cursor();
         let mut buffer = String::new();
 
-        for ((x, y), block) in writes {
+        for ((x, y), block) in changes {
             buffer.clear();
             buffer.write_char(block.char).unwrap();
-            cursor.goto(x as u16, y as u16);
+            cursor.goto(*x as u16, *y as u16);
             crossterm::style(&buffer).with(block.fg.into()).on(block.bg.into()).paint(state.screen);
         }
+    }
+
+    pub fn prepaint(&mut self, state: &mut State) {
+        let terminal = state.crossterm.terminal();
+        let (term_width, term_height) = {
+            let size = terminal.terminal_size();
+            (size.0 as usize, size.1 as usize)
+        };
+        let (width, height) = self.get_size();
+
+        if term_width != width || term_height != height {
+            self.resize(term_width, term_height);
+        }
+    }
+
+    pub fn commit(&mut self, state: &mut State) {
+        let terminal = state.crossterm.terminal();
+
+        if self.should_clear {
+            self.should_clear = false;
+            terminal.clear(crossterm::terminal::ClearType::All);
+            self.commit_all(state);
+            return;
+        }
+
+        let (width, height) = self.get_size();
+        let mut changes = Vec::new();
+
+        let mut x = 0;
+        let mut y = 0;
+        loop {
+            let new_value = self.in_progress.get_block(x, y);
+            let old_value = self.visible.get_block(x, y);
+
+            if new_value != old_value {
+                self.visible.set_block(x, y, new_value);
+                changes.push(((x, y), new_value));
+            }
+
+            self.in_progress.set_block(x, y, Block::default());
+
+            x += 1;
+            if x == width {
+                x = 0;
+                y += 1;
+            }
+
+            if y == height {
+                break;
+            }
+        }
+
+        self.commit_some(state, &changes);
     }
 }
 

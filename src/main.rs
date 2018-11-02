@@ -9,71 +9,46 @@ use std::{
 };
 
 use crossterm::{
-    style::{Color, style},
-    terminal::ClearType,
     Crossterm,
     Screen,
 };
 
 use crate::{
     state::{State, Action},
-    virtual_screen::VirtualScreen,
+    virtual_screen::{Color, VirtualScreen},
 };
 
-fn prepaint(state: &mut State) {
-    let terminal = state.crossterm.terminal();
-    let (width, height) = terminal.terminal_size();
-
-    if state.last_screen_size != (width, height) || state.super_dirty {
-        terminal.clear(ClearType::All);
-        state.last_screen_size = (width, height);
-        state.super_dirty = false;
-    }
-}
-
 fn paint(state: &State, screen: &mut VirtualScreen) {
-    let terminal = state.crossterm.terminal();
     let cursor = state.crossterm.cursor();
 
-    let (width, height) = terminal.terminal_size();
+    let (width, height) = screen.get_size();
 
     cursor.hide();
 
     let item_count_clamped = state.entries.len().min(height as usize - 4);
 
-    cursor.goto(0, 0);
-    style("-".repeat(width as usize)).paint(state.screen);
+    let full_width_line = "-".repeat(width as usize);
+    let gutter_line = "|\n".repeat(item_count_clamped);
 
-    cursor.goto(0, 1);
-    let gutter = "|\n".repeat(item_count_clamped);
-    style(gutter).paint(state.screen);
+    screen.write_str(0, 0, &full_width_line);
+    screen.write_str(0, 1, &gutter_line);
 
     for (index, entry) in state.entries.iter().enumerate() {
         if index >= item_count_clamped {
             break;
         }
 
-        cursor.goto(2, 1 + index as u16);
-
-        let mut styled = style(&entry.display);
-
         if index == state.selected_entry {
-            styled = styled.with(Color::Black).on(Color::White);
+            screen.write_str_color(2, 1 + index, &entry.display, Color::Black, Color::White);
+        } else {
+            screen.write_str(2, 1 + index, &entry.display);
         }
-
-        styled.paint(state.screen);
     }
 
-    cursor.goto(0, 1 + state.entries.len() as u16);
-    style("-".repeat(width as usize)).paint(state.screen);
-
-    cursor.goto(0, height - 2);
-    style("-".repeat(width as usize)).with(Color::White).on(Color::Black).paint(state.screen);
-    cursor.goto(0, height - 1);
-    terminal.clear(ClearType::CurrentLine);
-    style(format!("Last action: {:?}", state.last_action)).paint(state.screen);
-    cursor.goto(0, height);
-    style("-".repeat(width as usize)).paint(state.screen);
+    screen.write_str(0, 1 + item_count_clamped, &full_width_line);
+    screen.write_str(0, height - 2, &full_width_line);
+    screen.write_str(0, height - 1, &format!("Last action: {:?}", state.last_action));
+    screen.write_str(0, height, &full_width_line);
 }
 
 fn process_input(state: &mut State) -> Option<Action> {
@@ -96,22 +71,27 @@ fn main() {
     let crossterm = Crossterm::new(&alternate.screen);
     let input = crossterm.input();
 
-    let mut screen = VirtualScreen::new(30, 30);
+    let (width, height) = {
+        let size = crossterm.terminal().terminal_size();
+        (size.0 as usize, size.1 as usize)
+    };
+
+    let mut screen = VirtualScreen::new(width, height);
 
     let mut state = State {
         input,
         screen: &alternate.screen,
         crossterm: &crossterm,
-        super_dirty: false,
         last_action: None,
         working_directory: PathBuf::new(),
-        last_screen_size: (0, 0),
+        last_screen_size: (width, height),
         entries: Vec::new(),
         selected_entry: 0,
     };
 
     state.set_working_directory(&env::current_dir().unwrap());
-    // prepaint(&mut state);
+
+    screen.prepaint(&mut state);
     paint(&state, &mut screen);
     screen.commit(&mut state);
 
@@ -124,7 +104,7 @@ fn main() {
             }
         }
 
-        // prepaint(&mut state);
+        screen.prepaint(&mut state);
         paint(&state, &mut screen);
         screen.commit(&mut state);
     }

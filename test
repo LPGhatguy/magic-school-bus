@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+# stderr gets swallowed by msb, so we need to use redirection tricks to get it
+# back.
+
+cargo build
+{ error=$(./target/debug/msb 2>&1 1>&$out); } {out}>&1
+echo "$error"
