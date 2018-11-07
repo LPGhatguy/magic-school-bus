@@ -1,7 +1,8 @@
+use open;
+
 use std::{
     fs,
     path::{Path, PathBuf},
-    process,
 };
 
 pub struct FileEntry {
@@ -60,13 +61,7 @@ impl State {
     }
 
     pub fn open_file(&self, path: &Path) {
-        process::Command::new("subl")
-            .arg(path.display().to_string())
-            .stdout(process::Stdio::null())
-            .stdin(process::Stdio::null())
-            .stderr(process::Stdio::null())
-            .status()
-            .expect("Couldn't start process!");
+        open::that(path).expect("Could not open file");
     }
 
     pub fn process_action(&mut self, action: Action) {

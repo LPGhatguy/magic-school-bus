@@ -1,4 +1,5 @@
 extern crate crossterm;
+extern crate open;
 
 pub mod state;
 pub mod terminal_context;
@@ -6,6 +7,8 @@ pub mod virtual_screen;
 
 use std::{
     env,
+    panic,
+    process,
 };
 
 use crate::{
@@ -62,13 +65,13 @@ fn draw(state: &State, context: &TerminalContext, screen: &mut VirtualScreen) {
     screen.commit(context);
 }
 
-fn main() {
-    let context = TerminalContext::init();
+fn start() {
     let mut state = State::new();
+    state.set_working_directory(&env::current_dir().unwrap());
+
+    let context = TerminalContext::init();
     let (width, height) = context.get_terminal_size();
     let mut screen = VirtualScreen::new(width, height);
-
-    state.set_working_directory(&env::current_dir().unwrap());
 
     draw(&state, &context, &mut screen);
 
@@ -91,4 +94,20 @@ fn main() {
     drop(context);
 
     eprintln!("{}", state.working_directory.display());
+}
+
+fn main() {
+    if let Err(error) = panic::catch_unwind(start) {
+        let message = match error.downcast_ref::<&str>() {
+            Some(message) => message.to_string(),
+            None => match error.downcast_ref::<String>() {
+                Some(message) => message.clone(),
+                None => "UNKNOWN PANIC".to_string(),
+            },
+        };
+
+        eprintln!("Panic with message: {}", message);
+
+        process::exit(1);
+    }
 }
