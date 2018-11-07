@@ -17,22 +17,31 @@ cargo +beta install magic-school-bus
 ```
 
 ## Usage
-
 To start up Magic School Bus, just run:
 
 ```sh
+# Start in the current directory
 msb
+
+# You can also pass a directory to start in
+msb ../some-directory
 ```
 
 This will start you on an educational adventure in your current directory:
 
 ![Example of Magic School Bus](images/example.png)
 
-To navigate between entries, use `j` and `k`.
+For detailed information on all options and flags, run:
 
-Use `<return>` to select an entry: if it's a folder, you'll enter it, if it's a file, it'll be opened using your operating system's preferences.
+```sh
+msb --help
+```
 
-Use `q` to quit.
+To navigate between entries, press `j` and `k`.
+
+Press `<return>` to select an entry: if it's a folder, you'll enter it, if it's a file, it'll be opened using your operating system's preferences.
+
+Press `q` to quit.
 
 ### Changing shell working directory
 Magic School Bus has a special mode intended to help move your shell to the location you navigated to when you exit!
