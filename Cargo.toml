@@ -12,5 +12,6 @@ name = "msb"
 path = "src/main.rs"
 
 [dependencies]
+clap = "2.32"
 crossterm = "0.4.0"
 open = "1.2.2"
