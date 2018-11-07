@@ -1,4 +1,5 @@
 # Magic School Bus
+![Current crates.io version](https://img.shields.io/crates/v/magic-school-bus.svg)
 > Seatbelts, everyone!
 
 Magic School Bus is a terminal UI filesystem browser with Vi-inspired keybindings.
