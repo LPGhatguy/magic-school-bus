@@ -20,7 +20,7 @@ fn pad_right_with_spaces(text: &mut String, width: usize) {
 fn nudge_state(state: &mut State, screen: &VirtualScreen) {
     let height = screen.get_size().1;
 
-    let max_item_count = height - 2;
+    let max_item_count = height - 4;
 
     let window_top = state.entry_window_start;
     let window_bottom = state.entry_window_start + max_item_count;
@@ -37,7 +37,7 @@ fn nudge_state(state: &mut State, screen: &VirtualScreen) {
 fn render(state: &State, screen: &mut VirtualScreen) {
     let (width, height) = screen.get_size();
 
-    let max_item_count = height - 2;
+    let max_item_count = height - 4;
     let window_start = state.entry_window_start;
     let window_size = max_item_count.min(state.entries.len() - window_start);
 
@@ -45,24 +45,42 @@ fn render(state: &State, screen: &mut VirtualScreen) {
     pad_right_with_spaces(&mut working_dir_text, width);
     screen.write_str_color(0, 0, &working_dir_text, Color::Black, Color::White);
 
-    let gutter_line = "|\n".repeat(max_item_count);
+    let mut widest_entry_width = 0;
 
-    screen.write_str(0, 1, &gutter_line);
+    for (index, entry) in state.entries.iter().enumerate() {
+        widest_entry_width = widest_entry_width.max(entry.display.chars().count());
 
-    let entry_iter = state.entries.iter()
-        .enumerate()
-        .skip(window_start)
-        .take(window_size);
+        if index >= window_start && index < window_start + window_size {
+            let y = 2 + index - window_start;
 
-    for (index, entry) in entry_iter {
-        let y = 1 + index - window_start;
-
-        if index == state.selected_entry {
-            screen.write_str_color(2, y, &entry.display, Color::Black, Color::White);
-        } else {
-            screen.write_str(2, y, &entry.display);
+            if index == state.selected_entry {
+                screen.write_str_color(2, y, &entry.display, Color::Black, Color::White);
+            } else {
+                screen.write_str(2, y, &entry.display);
+            }
         }
     }
+
+    // Draw a border around all the entries
+    let end_of_list_line = "-".repeat(widest_entry_width + 4);
+    let more_list_line = "~".repeat(widest_entry_width + 4);
+
+    let top_line = if window_start > 0 {
+        &more_list_line
+    } else {
+        &end_of_list_line
+    };
+    let bottom_line = if window_start + window_size < state.entries.len() {
+        &more_list_line
+    } else {
+        &end_of_list_line
+    };
+
+    let entry_vertical_line = "|\n".repeat(window_size);
+    screen.write_str(0, 2, &entry_vertical_line);
+    screen.write_str(widest_entry_width + 3, 2, &entry_vertical_line);
+    screen.write_str(0, 1, top_line);
+    screen.write_str(0, 2 + window_size, bottom_line);
 
     let last_action_name = match state.last_action {
         Some(last_action) => format!("{:?}", last_action),
