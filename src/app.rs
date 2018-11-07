@@ -10,7 +10,7 @@ use crate::{
 fn nudge_state(state: &mut State, screen: &VirtualScreen) {
     let height = screen.get_size().1;
 
-    let max_item_count = height - 4;
+    let max_item_count = height - 2;
 
     let window_top = state.entry_window_start;
     let window_bottom = state.entry_window_start + max_item_count;
@@ -27,7 +27,7 @@ fn nudge_state(state: &mut State, screen: &VirtualScreen) {
 fn render(state: &State, screen: &mut VirtualScreen) {
     let (width, height) = screen.get_size();
 
-    let max_item_count = height - 4;
+    let max_item_count = height - 2;
     let window_start = state.entry_window_start;
     let window_size = max_item_count.min(state.entries.len() - window_start);
 
@@ -52,9 +52,26 @@ fn render(state: &State, screen: &mut VirtualScreen) {
         }
     }
 
-    screen.write_str(0, height - 3, &full_width_line);
-    screen.write_str(0, height - 2, &format!("Last action: {:?}", state.last_action));
-    screen.write_str(0, height - 1, &full_width_line);
+    let last_action_name = match state.last_action {
+        Some(last_action) => format!("{:?}", last_action),
+        None => "None".to_string(),
+    };
+
+    let status_bar_text = &format!("Last action: {}", last_action_name);
+
+    // TODO: More accurate string width calculation for multi-codepoint
+    // characters. Unicode support in terminals is dicey.
+    let status_bar_text_width = status_bar_text.chars().count();
+
+    let padding_size = if status_bar_text_width < width {
+        width - status_bar_text_width
+    } else {
+        0
+    };
+
+    let status_bar_contents = format!("{}{}", status_bar_text, " ".repeat(padding_size));
+
+    screen.write_str_color(0, height - 1, &status_bar_contents, Color::Black, Color::White);
 }
 
 fn process_input(context: &TerminalContext) -> Option<Action> {
