@@ -66,6 +66,22 @@ fn draw(state: &State, context: &TerminalContext, screen: &mut VirtualScreen) {
 }
 
 fn start() {
+    let mut print_working_directory = false;
+
+    match env::args().nth(1) {
+        Some(flag) => {
+            if flag == "--pwd" {
+                print_working_directory = true;
+            } else {
+                eprintln!("Unknown argument {}", flag);
+                eprintln!("Valid arguments are:");
+                eprintln!("    --pwd: Print the current directory to stderr at close.");
+                process::exit(1);
+            }
+        },
+        _ => {},
+    }
+
     let mut state = State::new(env::current_dir().unwrap());
 
     let context = TerminalContext::init();
@@ -92,7 +108,9 @@ fn start() {
 
     drop(context);
 
-    eprintln!("{}", state.working_directory.display());
+    if print_working_directory {
+        eprintln!("{}", state.working_directory.display());
+    }
 }
 
 fn main() {

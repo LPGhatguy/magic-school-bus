@@ -6,5 +6,7 @@ set -e
 # back.
 
 cargo build
+set +e
+
 { error=$(./target/debug/msb 2>&1 1>&$out); } {out}>&1
 echo "$error"
