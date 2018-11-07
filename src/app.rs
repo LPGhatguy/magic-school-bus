@@ -6,26 +6,52 @@ use crate::{
     terminal_context::TerminalContext,
 };
 
+/// A hack to adjust state to match the screen, used for windowing the list.
+fn nudge_state(state: &mut State, screen: &VirtualScreen) {
+    let height = screen.get_size().1;
+
+    let max_item_count = height - 4;
+
+    let window_top = state.entry_window_start;
+    let window_bottom = state.entry_window_start + max_item_count;
+
+    if state.selected_entry <= window_top {
+        state.entry_window_start = state.selected_entry;
+    }
+
+    if state.selected_entry >= window_bottom {
+        state.entry_window_start = state.selected_entry - max_item_count + 1;
+    }
+}
+
 fn render(state: &State, screen: &mut VirtualScreen) {
     let (width, height) = screen.get_size();
 
-    let item_count_clamped = state.entries.len().min(height as usize - 4);
+    let max_item_count = height - 4;
+    let window_start = state.entry_window_start;
+    let window_size = max_item_count.min(state.entries.len() - window_start);
 
     let full_width_line = "-".repeat(width as usize);
-    let gutter_line = "|\n".repeat(item_count_clamped);
+    let gutter_line = "|\n".repeat(max_item_count);
 
     screen.write_str(0, 0, &full_width_line);
     screen.write_str(0, 1, &gutter_line);
 
-    for (index, entry) in state.entries.iter().take(item_count_clamped).enumerate() {
+    let entry_iter = state.entries.iter()
+        .enumerate()
+        .skip(window_start)
+        .take(window_size);
+
+    for (index, entry) in entry_iter {
+        let y = 1 + index - window_start;
+
         if index == state.selected_entry {
-            screen.write_str_color(2, 1 + index, &entry.display, Color::Black, Color::White);
+            screen.write_str_color(2, y, &entry.display, Color::Black, Color::White);
         } else {
-            screen.write_str(2, 1 + index, &entry.display);
+            screen.write_str(2, y, &entry.display);
         }
     }
 
-    screen.write_str(0, 1 + item_count_clamped, &full_width_line);
     screen.write_str(0, height - 3, &full_width_line);
     screen.write_str(0, height - 2, &format!("Last action: {:?}", state.last_action));
     screen.write_str(0, height - 1, &full_width_line);
@@ -66,6 +92,7 @@ pub fn start(config: AppConfig) {
     let (width, height) = context.get_terminal_size();
     let mut screen = VirtualScreen::new(width, height);
 
+    nudge_state(&mut state, &screen);
     draw(&state, &context, &mut screen);
 
     loop {
@@ -81,6 +108,7 @@ pub fn start(config: AppConfig) {
             }
         }
 
+        nudge_state(&mut state, &screen);
         draw(&state, &context, &mut screen);
     }
 

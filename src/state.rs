@@ -5,17 +5,20 @@ use std::{
     path::{Path, PathBuf},
 };
 
+#[derive(Debug)]
 pub struct FileEntry {
     pub is_dir: bool,
     pub display: String,
     pub path: PathBuf,
 }
 
+#[derive(Debug)]
 pub struct State {
     pub last_action: Option<Action>,
     pub working_directory: PathBuf,
     pub entries: Vec<FileEntry>,
     pub selected_entry: usize,
+    pub entry_window_start: usize,
 }
 
 impl State {
@@ -25,6 +28,7 @@ impl State {
             working_directory: PathBuf::new(),
             entries: Vec::new(),
             selected_entry: 0,
+            entry_window_start: 0,
         };
 
         state.set_working_directory(start_dir);
@@ -35,6 +39,7 @@ impl State {
     pub fn set_working_directory(&mut self, path: PathBuf) {
         self.entries.clear();
         self.selected_entry = 0;
+        self.entry_window_start = 0;
 
         if let Some(parent) = path.parent() {
             self.entries.push(FileEntry {
