@@ -16,9 +16,6 @@ impl TerminalContext {
         let alternate = screen.enable_alternate_modes(true).unwrap();
         let crossterm = Crossterm::new(&alternate.screen);
 
-        let cursor = crossterm.cursor();
-        cursor.hide();
-
         TerminalContext {
             crossterm,
             alternate_screen: alternate,

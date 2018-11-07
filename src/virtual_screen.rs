@@ -225,6 +225,8 @@ impl VirtualScreen {
             return;
         }
 
+        context.crossterm.cursor().hide();
+
         let (width, height) = self.get_size();
         let mut changes = Vec::new();
 
