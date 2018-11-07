@@ -12,7 +12,7 @@ Magic School Bus needs **Rust Beta 1.31** or newer to build since it uses featur
 If you already have Rustup installed, you can grab Magic School Bus with:
 
 ```sh
-rustup toolchain add beta
+rustup install beta
 cargo +beta install magic-school-bus
 ```
 
