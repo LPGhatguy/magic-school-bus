@@ -6,6 +6,16 @@ use crate::{
     terminal_context::TerminalContext,
 };
 
+fn pad_right_with_spaces(text: &mut String, width: usize) {
+    let text_width = text.chars().count();
+
+    if text_width < width {
+        for _ in 0..(width - text_width) {
+            text.push(' ');
+        }
+    }
+}
+
 /// A hack to adjust state to match the screen, used for windowing the list.
 fn nudge_state(state: &mut State, screen: &VirtualScreen) {
     let height = screen.get_size().1;
@@ -31,10 +41,12 @@ fn render(state: &State, screen: &mut VirtualScreen) {
     let window_start = state.entry_window_start;
     let window_size = max_item_count.min(state.entries.len() - window_start);
 
-    let full_width_line = "-".repeat(width as usize);
+    let mut working_dir_text = format!("{}", state.working_directory.display());
+    pad_right_with_spaces(&mut working_dir_text, width);
+    screen.write_str_color(0, 0, &working_dir_text, Color::Black, Color::White);
+
     let gutter_line = "|\n".repeat(max_item_count);
 
-    screen.write_str(0, 0, &full_width_line);
     screen.write_str(0, 1, &gutter_line);
 
     let entry_iter = state.entries.iter()
@@ -57,21 +69,9 @@ fn render(state: &State, screen: &mut VirtualScreen) {
         None => "None".to_string(),
     };
 
-    let status_bar_text = &format!("Last action: {}", last_action_name);
-
-    // TODO: More accurate string width calculation for multi-codepoint
-    // characters. Unicode support in terminals is dicey.
-    let status_bar_text_width = status_bar_text.chars().count();
-
-    let padding_size = if status_bar_text_width < width {
-        width - status_bar_text_width
-    } else {
-        0
-    };
-
-    let status_bar_contents = format!("{}{}", status_bar_text, " ".repeat(padding_size));
-
-    screen.write_str_color(0, height - 1, &status_bar_contents, Color::Black, Color::White);
+    let mut status_bar_text = format!("Last action: {}", last_action_name);
+    pad_right_with_spaces(&mut status_bar_text, width);
+    screen.write_str_color(0, height - 1, &status_bar_text, Color::Black, Color::White);
 }
 
 fn process_input(context: &TerminalContext) -> Option<Action> {
