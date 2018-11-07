@@ -1,5 +1,8 @@
 [package]
 name = "magic-school-bus"
+description = "Cross-platform TUI filesystem browser with Vi-like keybinds"
+license = "MIT"
+repository = "https://github.com/LPGhatguy/magic-school-bus"
 version = "0.1.0"
 authors = ["lgreathouse <me@lpghatguy.com>"]
 edition = "2018"
