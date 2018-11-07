@@ -19,19 +19,22 @@ pub struct State {
 }
 
 impl State {
-    pub fn new() -> State {
-        State {
+    pub fn new(start_dir: PathBuf) -> State {
+        let mut state = State {
             last_action: None,
             working_directory: PathBuf::new(),
             entries: Vec::new(),
             selected_entry: 0,
-        }
+        };
+
+        state.set_working_directory(start_dir);
+
+        state
     }
 
-    pub fn set_working_directory(&mut self, path: &Path) {
-        self.selected_entry = 0;
-        self.working_directory = path.to_path_buf();
+    pub fn set_working_directory(&mut self, path: PathBuf) {
         self.entries.clear();
+        self.selected_entry = 0;
 
         if let Some(parent) = path.parent() {
             self.entries.push(FileEntry {
@@ -41,7 +44,7 @@ impl State {
             });
         }
 
-        for entry in fs::read_dir(path).unwrap() {
+        for entry in fs::read_dir(&path).unwrap() {
             let entry = entry.unwrap();
             let path = entry.path();
             let mut display = path.file_name().unwrap().to_string_lossy().to_string();
@@ -58,6 +61,8 @@ impl State {
                 path,
             });
         }
+
+        self.working_directory = path;
     }
 
     pub fn open_file(&self, path: &Path) {
@@ -82,7 +87,7 @@ impl State {
                 let entry = &self.entries[self.selected_entry];
 
                 if entry.is_dir {
-                    self.set_working_directory(&entry.path.clone());
+                    self.set_working_directory(entry.path.to_path_buf());
                 } else {
                     self.open_file(&entry.path);
                 }

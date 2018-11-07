@@ -66,8 +66,7 @@ fn draw(state: &State, context: &TerminalContext, screen: &mut VirtualScreen) {
 }
 
 fn start() {
-    let mut state = State::new();
-    state.set_working_directory(&env::current_dir().unwrap());
+    let mut state = State::new(env::current_dir().unwrap());
 
     let context = TerminalContext::init();
     let (width, height) = context.get_terminal_size();
@@ -102,11 +101,11 @@ fn main() {
             Some(message) => message.to_string(),
             None => match error.downcast_ref::<String>() {
                 Some(message) => message.clone(),
-                None => "UNKNOWN PANIC".to_string(),
+                None => "<no message>".to_string(),
             },
         };
 
-        eprintln!("Panic with message: {}", message);
+        eprintln!("The Magic School Bus crashed!\n{}", message);
 
         process::exit(1);
     }
