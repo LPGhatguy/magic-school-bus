@@ -11,29 +11,40 @@ use std::{
     env,
     panic,
     process,
+    path::PathBuf,
 };
+
+use clap::{App, Arg};
 
 use crate::app::AppConfig;
 
 fn main() {
-    let mut config = AppConfig {
-        print_working_directory: false,
-        start_dir: env::current_dir().unwrap(),
+    let matches = App::new("Magic School Bus")
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
+
+        .arg(Arg::with_name("START_DIR")
+            .help("The directory to start in, defaulting to the current working directory.")
+            .index(1))
+
+        .arg(Arg::with_name("pwd")
+            .long("pwd")
+            .help("Prints the current directory to stderr when closing."))
+
+        .get_matches();
+
+    let start_dir = match matches.value_of("START_DIR") {
+        Some(start_dir) => PathBuf::from(start_dir),
+        None => env::current_dir().unwrap(),
     };
 
-    match env::args().nth(1) {
-        Some(flag) => {
-            if flag == "--pwd" {
-                config.print_working_directory = true;
-            } else {
-                eprintln!("Unknown argument {}", flag);
-                eprintln!("Valid arguments are:");
-                eprintln!("    --pwd: Print the current directory to stderr at close.");
-                process::exit(1);
-            }
-        },
-        _ => {},
-    }
+    let print_working_directory = matches.is_present("pwd");
+
+    let config = AppConfig {
+        print_working_directory,
+        start_dir,
+    };
 
     let result = panic::catch_unwind(move || app::start(config));
 
