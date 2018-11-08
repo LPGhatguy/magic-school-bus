@@ -1,9 +1,10 @@
 use open;
 
 use std::{
-    fs,
-    path::{Path, PathBuf},
     cmp::Ordering,
+    fs,
+    path::PathBuf,
+    thread,
 };
 
 use crate::{
@@ -100,8 +101,12 @@ impl State {
         self.working_directory = path;
     }
 
-    pub fn open_file(&self, path: &Path) {
-        open::that(path).expect("Could not open file");
+    pub fn open_file(&self, path: PathBuf) {
+        // Open can sometimes take awhile, like when opening Visual Studio.
+        // To mitigate that, call open on a throwaway new thread.
+        thread::spawn(move || {
+            open::that(path).expect("Could not open file");
+        });
     }
 
     fn perform_find_previous(&mut self) {
@@ -166,7 +171,7 @@ impl State {
                 if entry.is_dir {
                     self.set_working_directory(entry.path.to_path_buf());
                 } else {
-                    self.open_file(&entry.path);
+                    self.open_file(entry.path.to_path_buf());
                 }
             },
             Action::SetAndFindNext(count, first_char) => {
