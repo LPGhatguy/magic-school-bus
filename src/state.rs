@@ -6,6 +6,10 @@ use std::{
     cmp::Ordering,
 };
 
+use crate::{
+    action::Action,
+};
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct FileEntry {
     pub is_dir: bool,
@@ -181,15 +185,15 @@ impl State {
             Action::EnterFindSpecifyMode => {
                 self.in_find_specify_mode = true;
             },
-            Action::SetFindTarget(first_char) => {
+            Action::SetAndFindNext(first_char) => {
                 self.in_find_specify_mode = false;
                 self.find_target = Some(first_char);
                 self.perform_find_next();
             },
-            Action::NextFind => {
+            Action::FindNext => {
                 self.perform_find_next();
             },
-            Action::PreviousFind => {
+            Action::FindPrevious => {
                 self.perform_find_previous();
             },
             _ => {},
@@ -215,48 +219,6 @@ impl State {
         } else {
             self.perform_single_action(action);
             self.last_action_count = 1;
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Action {
-    Quit,
-    Up,
-    Down,
-    Top,
-    Bottom,
-    Select,
-    Cancel,
-    AddToRepeatBuffer(char),
-    EnterFindSpecifyMode,
-    SetFindTarget(char),
-    NextFind,
-    PreviousFind,
-
-    DebugDumpVisible,
-    Unknown(char),
-}
-
-impl Action {
-    fn should_repeat(&self) -> bool {
-        match self {
-            Action::Up | Action::Down => true,
-            _ => false,
-        }
-    }
-
-    fn should_consume_repeat(&self) -> bool {
-        match self {
-            Action::AddToRepeatBuffer(_) => false,
-            _ => true,
-        }
-    }
-
-    fn show_in_status_bar(&self) -> bool {
-        match self {
-            Action::AddToRepeatBuffer(_) => false,
-            _ => true,
         }
     }
 }

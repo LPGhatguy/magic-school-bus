@@ -1,9 +1,11 @@
 use std::path::PathBuf;
 
 use crate::{
-    state::{State, Action},
+    state::State,
     virtual_screen::{Color, VirtualScreen},
     terminal_context::TerminalContext,
+    action::Action,
+    input_state::InputState,
 };
 
 fn pad_right_with_spaces(text: &mut String, width: usize) {
@@ -104,37 +106,6 @@ fn render(state: &State, screen: &mut VirtualScreen) {
     screen.write_str_color(0, height - 1, &status_bar_text, Color::Black, Color::White);
 }
 
-fn process_input(state: &State, context: &TerminalContext) -> Option<Action> {
-    let input = context.crossterm.input();
-
-    if let Ok(key) = input.read_char() {
-        if key == '\u{1b}' {
-            return Some(Action::Cancel);
-        }
-
-        if state.in_find_specify_mode {
-            return Some(Action::SetFindTarget(key));
-        }
-
-        match key {
-            'q' => Some(Action::Quit),
-            'j' => Some(Action::Down),
-            'k' => Some(Action::Up),
-            'g' => Some(Action::Top),
-            'G' => Some(Action::Bottom),
-            '\r' => Some(Action::Select),
-            '[' => Some(Action::DebugDumpVisible),
-            '0'...'9' => Some(Action::AddToRepeatBuffer(key)),
-            'f' => Some(Action::EnterFindSpecifyMode),
-            ';' => Some(Action::NextFind),
-            ',' => Some(Action::PreviousFind),
-            _ => Some(Action::Unknown(key)),
-        }
-    } else {
-        None
-    }
-}
-
 fn draw(state: &State, context: &TerminalContext, screen: &mut VirtualScreen) {
     screen.prepaint(context);
     render(state, screen);
@@ -148,6 +119,7 @@ pub struct AppConfig {
 
 pub fn start(config: AppConfig) {
     let mut state = State::new(config.start_dir.clone());
+    let mut input_state = InputState::new();
 
     let context = TerminalContext::init();
     let (width, height) = context.get_terminal_size();
@@ -157,7 +129,7 @@ pub fn start(config: AppConfig) {
     draw(&state, &context, &mut screen);
 
     loop {
-        if let Some(action) = process_input(&state, &context) {
+        if let Some(action) = input_state.process_input(&context) {
             state.process_action(action);
 
             if action == Action::Quit {

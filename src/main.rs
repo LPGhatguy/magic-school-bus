@@ -6,6 +6,8 @@ pub mod app;
 pub mod state;
 pub mod terminal_context;
 pub mod virtual_screen;
+pub mod input_state;
+pub mod action;
 
 use std::{
     env,
