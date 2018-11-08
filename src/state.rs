@@ -3,13 +3,36 @@ use open;
 use std::{
     fs,
     path::{Path, PathBuf},
+    cmp::Ordering,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FileEntry {
     pub is_dir: bool,
     pub display: String,
     pub path: PathBuf,
+}
+
+impl PartialOrd for FileEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for FileEntry {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.display == ".." {
+            Ordering::Less
+        } else if other.display == ".." {
+            Ordering::Greater
+        } else if self.is_dir && !other.is_dir {
+            Ordering::Less
+        } else if other.is_dir && !self.is_dir {
+            Ordering::Greater
+        } else {
+            self.display.to_lowercase().cmp(&other.display.to_lowercase())
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -71,6 +94,7 @@ impl State {
             });
         }
 
+        self.entries.sort();
         self.working_directory = path;
     }
 
