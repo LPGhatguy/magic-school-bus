@@ -29,7 +29,7 @@ msb ../some-directory
 
 This will start you on an educational adventure in your current directory:
 
-![Example of Magic School Bus](images/example.png)
+![Example of Magic School Bus](images/demo.gif)
 
 For detailed information on all options and flags, run:
 
