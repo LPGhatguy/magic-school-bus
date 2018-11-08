@@ -150,9 +150,11 @@ pub enum Action {
     Top,
     Bottom,
     Select,
+    Cancel,
     AddToRepeatBuffer(char),
 
     DebugDumpVisible,
+    Unknown(char),
 }
 
 impl Action {

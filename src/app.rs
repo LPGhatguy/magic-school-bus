@@ -86,7 +86,11 @@ fn render(state: &State, screen: &mut VirtualScreen) {
 
     match state.last_action {
         Some(last_action) => {
-            status_bar_text.push_str(&format!("{:?} x{}", last_action, state.last_action_count));
+            status_bar_text.push_str(&format!("{:?}", last_action));
+
+            if state.last_action_count > 1 {
+                status_bar_text.push_str(&format!(" x{}", state.last_action_count));
+            }
         },
         None => status_bar_text.push_str("None"),
     };
@@ -113,7 +117,8 @@ fn process_input(context: &TerminalContext) -> Option<Action> {
             '\r' => Some(Action::Select),
             '[' => Some(Action::DebugDumpVisible),
             '0'...'9' => Some(Action::AddToRepeatBuffer(key)),
-            _ => None,
+            '\u{1b}' => Some(Action::Cancel),
+            _ => Some(Action::Unknown(key)),
         }
     } else {
         None
