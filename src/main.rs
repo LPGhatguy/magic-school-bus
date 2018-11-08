@@ -2,12 +2,12 @@ extern crate clap;
 extern crate crossterm;
 extern crate open;
 
-pub mod app;
+pub mod action;
+pub mod input_state;
 pub mod state;
 pub mod terminal_context;
+pub mod ui;
 pub mod virtual_screen;
-pub mod input_state;
-pub mod action;
 
 use std::{
     env,
@@ -18,7 +18,51 @@ use std::{
 
 use clap::{App, Arg};
 
-use crate::app::AppConfig;
+use crate::{
+    action::Action,
+    input_state::InputState,
+    state::State,
+    terminal_context::TerminalContext,
+    virtual_screen::VirtualScreen,
+};
+
+struct AppConfig {
+    print_working_directory: bool,
+    start_dir: PathBuf,
+}
+
+fn start(config: AppConfig) {
+    let mut state = State::new(config.start_dir.clone());
+    let mut input_state = InputState::new();
+    let context = TerminalContext::init();
+    let (width, height) = context.get_terminal_size();
+    let mut screen = VirtualScreen::new(width, height);
+
+    loop {
+        ui::nudge_state(&mut state, &screen);
+        screen.prepaint(&context);
+        ui::render(&state, &input_state, &mut screen);
+        screen.commit(&context);
+
+        if let Some(action) = input_state.process_input(&context) {
+            state.process_action(action);
+
+            if action == Action::Quit {
+                break;
+            }
+
+            if action == Action::DebugDumpVisible {
+                eprintln!("{}", screen.show_visible_buffer());
+            }
+        }
+    }
+
+    drop(context);
+
+    if config.print_working_directory {
+        eprintln!("{}", state.working_directory.display());
+    }
+}
 
 fn main() {
     let matches = App::new("Magic School Bus")
@@ -48,7 +92,7 @@ fn main() {
         start_dir,
     };
 
-    let result = panic::catch_unwind(move || app::start(config));
+    let result = panic::catch_unwind(move || start(config));
 
     if let Err(error) = result {
         let message = match error.downcast_ref::<&str>() {

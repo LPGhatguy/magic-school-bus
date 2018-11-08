@@ -1,11 +1,7 @@
-use std::path::PathBuf;
-
 use crate::{
+    input_state::InputState,
     state::State,
     virtual_screen::{Color, VirtualScreen},
-    terminal_context::TerminalContext,
-    action::Action,
-    input_state::InputState,
 };
 
 fn pad_right_with_spaces(text: &mut String, width: usize) {
@@ -19,7 +15,7 @@ fn pad_right_with_spaces(text: &mut String, width: usize) {
 }
 
 /// A hack to adjust state to match the screen, used for windowing the list.
-fn nudge_state(state: &mut State, screen: &VirtualScreen) {
+pub fn nudge_state(state: &mut State, screen: &VirtualScreen) {
     let height = screen.get_size().1;
 
     let max_item_count = height - 4;
@@ -36,7 +32,7 @@ fn nudge_state(state: &mut State, screen: &VirtualScreen) {
     }
 }
 
-fn render(state: &State, input_state: &InputState, screen: &mut VirtualScreen) {
+pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScreen) {
     let (width, height) = screen.get_size();
 
     let max_item_count = height - 4;
@@ -100,50 +96,4 @@ fn render(state: &State, input_state: &InputState, screen: &mut VirtualScreen) {
 
     pad_right_with_spaces(&mut status_bar_text, width);
     screen.write_str_color(0, height - 1, &status_bar_text, Color::Black, Color::White);
-}
-
-fn draw(state: &State, input_state: &InputState, context: &TerminalContext, screen: &mut VirtualScreen) {
-    screen.prepaint(context);
-    render(state, input_state, screen);
-    screen.commit(context);
-}
-
-pub struct AppConfig {
-    pub print_working_directory: bool,
-    pub start_dir: PathBuf,
-}
-
-pub fn start(config: AppConfig) {
-    let mut state = State::new(config.start_dir.clone());
-    let mut input_state = InputState::new();
-
-    let context = TerminalContext::init();
-    let (width, height) = context.get_terminal_size();
-    let mut screen = VirtualScreen::new(width, height);
-
-    nudge_state(&mut state, &screen);
-    draw(&state, &input_state, &context, &mut screen);
-
-    loop {
-        if let Some(action) = input_state.process_input(&context) {
-            state.process_action(action);
-
-            if action == Action::Quit {
-                break;
-            }
-
-            if action == Action::DebugDumpVisible {
-                eprintln!("{}", screen.show_visible_buffer());
-            }
-        }
-
-        nudge_state(&mut state, &screen);
-        draw(&state, &input_state, &context, &mut screen);
-    }
-
-    drop(context);
-
-    if config.print_working_directory {
-        eprintln!("{}", state.working_directory.display());
-    }
 }
