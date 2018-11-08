@@ -19,6 +19,7 @@ pub struct State {
     pub entries: Vec<FileEntry>,
     pub selected_entry: usize,
     pub entry_window_start: usize,
+    pub action_count_buffer: String,
 }
 
 impl State {
@@ -29,6 +30,7 @@ impl State {
             entries: Vec::new(),
             selected_entry: 0,
             entry_window_start: 0,
+            action_count_buffer: String::new(),
         };
 
         state.set_working_directory(start_dir);
@@ -74,19 +76,37 @@ impl State {
         open::that(path).expect("Could not open file");
     }
 
+    fn consume_repeat(&mut self) -> u64 {
+        let count = self.action_count_buffer.parse::<u64>().unwrap_or(1);
+        self.action_count_buffer.clear();
+
+        count
+    }
+
+    fn repeated<F: Fn(&mut State)>(&mut self, callback: F) {
+        let count = self.consume_repeat();
+        for _ in 0..count {
+            callback(self);
+        }
+    }
+
     pub fn process_action(&mut self, action: Action) {
         self.last_action = Some(action);
 
         match action {
             Action::Up => {
-                if self.selected_entry > 0 {
-                    self.selected_entry -= 1;
-                }
+                self.repeated(|state| {
+                    if state.selected_entry > 0 {
+                        state.selected_entry -= 1;
+                    }
+                });
             },
             Action::Down => {
-                if self.selected_entry < self.entries.len() - 1 {
-                    self.selected_entry += 1;
-                }
+                self.repeated(|state| {
+                    if self.selected_entry < self.entries.len() - 1 {
+                        self.selected_entry += 1;
+                    }
+                });
             },
             Action::Top => {
                 self.selected_entry = 0;
@@ -103,6 +123,9 @@ impl State {
                     self.open_file(&entry.path);
                 }
             },
+            Action::AddToRepeatBuffer(digit) => {
+                self.action_count_buffer.push(digit);
+            },
             _ => {},
         }
     }
@@ -116,6 +139,7 @@ pub enum Action {
     Top,
     Bottom,
     Select,
+    AddToRepeatBuffer(char),
 
     DebugDumpVisible,
 }

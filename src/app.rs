@@ -104,6 +104,7 @@ fn process_input(context: &TerminalContext) -> Option<Action> {
             'G' => Some(Action::Bottom),
             '\r' => Some(Action::Select),
             '[' => Some(Action::DebugDumpVisible),
+            '0'...'9' => Some(Action::AddToRepeatBuffer(key)),
             _ => None,
         }
     } else {

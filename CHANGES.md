@@ -2,6 +2,7 @@
 
 ## master
 - Added `g` (top of list) and `G` bottom of list motions ([#5](https://github.com/LPGhatguy/magic-school-bus/issues/5))
+- Implemented action repeat ([#6](https://github.com/LPGhatguy/magic-school-bus/issues/6))
 
 ## 0.3.0
 - Updated status bar to be more readable
