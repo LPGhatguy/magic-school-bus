@@ -104,10 +104,18 @@ fn render(state: &State, screen: &mut VirtualScreen) {
     screen.write_str_color(0, height - 1, &status_bar_text, Color::Black, Color::White);
 }
 
-fn process_input(context: &TerminalContext) -> Option<Action> {
+fn process_input(state: &State, context: &TerminalContext) -> Option<Action> {
     let input = context.crossterm.input();
 
     if let Ok(key) = input.read_char() {
+        if key == '\u{1b}' {
+            return Some(Action::Cancel);
+        }
+
+        if state.in_find_specify_mode {
+            return Some(Action::SetFindTarget(key));
+        }
+
         match key {
             'q' => Some(Action::Quit),
             'j' => Some(Action::Down),
@@ -117,7 +125,9 @@ fn process_input(context: &TerminalContext) -> Option<Action> {
             '\r' => Some(Action::Select),
             '[' => Some(Action::DebugDumpVisible),
             '0'...'9' => Some(Action::AddToRepeatBuffer(key)),
-            '\u{1b}' => Some(Action::Cancel),
+            'f' => Some(Action::EnterFindSpecifyMode),
+            ';' => Some(Action::NextFind),
+            ',' => Some(Action::PreviousFind),
             _ => Some(Action::Unknown(key)),
         }
     } else {
@@ -147,7 +157,7 @@ pub fn start(config: AppConfig) {
     draw(&state, &context, &mut screen);
 
     loop {
-        if let Some(action) = process_input(&context) {
+        if let Some(action) = process_input(&state, &context) {
             state.process_action(action);
 
             if action == Action::Quit {

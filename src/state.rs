@@ -44,6 +44,8 @@ pub struct State {
     pub selected_entry: usize,
     pub entry_window_start: usize,
     pub action_count_buffer: String,
+    pub in_find_specify_mode: bool,
+    pub find_target: Option<char>,
 }
 
 impl State {
@@ -56,6 +58,8 @@ impl State {
             selected_entry: 0,
             entry_window_start: 0,
             action_count_buffer: String::new(),
+            in_find_specify_mode: false,
+            find_target: None,
         };
 
         state.set_working_directory(start_dir);
@@ -111,6 +115,9 @@ impl State {
 
     fn perform_single_action(&mut self, action: Action) {
         match action {
+            Action::Cancel => {
+                self.in_find_specify_mode = false;
+            },
             Action::Up => {
                 if self.selected_entry > 0 {
                     self.selected_entry -= 1;
@@ -138,6 +145,10 @@ impl State {
             },
             Action::AddToRepeatBuffer(digit) => {
                 self.action_count_buffer.push(digit);
+            },
+            Action::SetFindTarget(first_char) => {
+                self.in_find_specify_mode = false;
+                self.find_target = Some(first_char);
             },
             _ => {},
         }
@@ -176,6 +187,10 @@ pub enum Action {
     Select,
     Cancel,
     AddToRepeatBuffer(char),
+    EnterFindSpecifyMode,
+    SetFindTarget(char),
+    NextFind,
+    PreviousFind,
 
     DebugDumpVisible,
     Unknown(char),
