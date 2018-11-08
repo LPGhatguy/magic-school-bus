@@ -11,9 +11,16 @@ use crate::{
     action::Action,
 };
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum FileEntryKind {
+    Parent,
+    Directory,
+    File,
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct FileEntry {
-    pub is_dir: bool,
+    pub kind: FileEntryKind,
     pub display: String,
     pub path: PathBuf,
 }
@@ -26,16 +33,12 @@ impl PartialOrd for FileEntry {
 
 impl Ord for FileEntry {
     fn cmp(&self, other: &Self) -> Ordering {
-        if self.display == ".." {
-            Ordering::Less
-        } else if other.display == ".." {
-            Ordering::Greater
-        } else if self.is_dir && !other.is_dir {
-            Ordering::Less
-        } else if other.is_dir && !self.is_dir {
-            Ordering::Greater
-        } else {
-            self.display.to_lowercase().cmp(&other.display.to_lowercase())
+        match (self.kind, other.kind) {
+            (FileEntryKind::Parent, _) => Ordering::Less,
+            (_, FileEntryKind::Parent) => Ordering::Greater,
+            (FileEntryKind::Directory, FileEntryKind::File) => Ordering::Less,
+            (FileEntryKind::File, FileEntryKind::Directory) => Ordering::Greater,
+            _ => self.display.to_lowercase().cmp(&other.display.to_lowercase()),
         }
     }
 }
@@ -71,7 +74,7 @@ impl State {
 
         if let Some(parent) = self.working_directory.parent() {
             self.entries.push(FileEntry {
-                is_dir: true,
+                kind: FileEntryKind::Parent,
                 display: "..".to_string(),
                 path: parent.to_path_buf(),
             });
@@ -81,15 +84,15 @@ impl State {
             let entry = entry.unwrap();
             let path = entry.path();
             let mut display = path.file_name().unwrap().to_string_lossy().to_string();
-            let mut is_dir = false;
+            let mut kind = FileEntryKind::File;
 
             if path.is_dir() {
-                is_dir = true;
+                kind = FileEntryKind::Directory;
                 display.push_str("/");
             }
 
             self.entries.push(FileEntry {
-                is_dir,
+                kind,
                 display,
                 path,
             });
@@ -174,26 +177,28 @@ impl State {
             Action::Activate => {
                 let entry = &self.entries[self.cursor];
 
-                if entry.is_dir {
-                    self.set_working_directory(entry.path.clone());
-                } else {
-                    self.open_file(entry.path.clone());
+                match entry.kind {
+                    FileEntryKind::Directory | FileEntryKind::Parent => {
+                        self.set_working_directory(entry.path.clone());
+                    },
+                    FileEntryKind::File => {
+                        self.open_file(entry.path.clone());
+                    },
                 }
             },
             Action::Delete => {
-                // TODO: More elegant way to prevent user from deleting `..`?
-                if self.cursor == 0 {
-                    return;
-                }
-
                 let entry = &self.entries[self.cursor];
 
-                if entry.is_dir {
-                    fs::remove_dir_all(&entry.path)
-                        .expect("Could not remove directory and its contents!");
-                } else {
-                    fs::remove_file(&entry.path)
-                        .expect("Could not remove file!");
+                match entry.kind {
+                    FileEntryKind::Directory => {
+                        fs::remove_dir_all(&entry.path)
+                            .expect("Could not remove directory and its contents!");
+                    },
+                    FileEntryKind::File => {
+                        fs::remove_file(&entry.path)
+                            .expect("Could not remove file!");
+                    },
+                    FileEntryKind::Parent => {},
                 }
 
                 self.refresh_working_directory();
