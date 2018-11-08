@@ -2,6 +2,7 @@
 
 ## master
 - Added command repeat information to status bar
+- Entries now show folders first, then files, both case-insensitive alphabetized.
 
 ## 0.3.1
 - Added `g` (top of list) and `G` bottom of list motions ([#5](https://github.com/LPGhatguy/magic-school-bus/issues/5))
