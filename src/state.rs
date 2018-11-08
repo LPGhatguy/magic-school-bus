@@ -45,7 +45,7 @@ pub struct State {
     pub last_action: Option<Action>,
     pub working_directory: PathBuf,
     pub entries: Vec<FileEntry>,
-    pub selected_entry: usize,
+    pub cursor: usize,
     pub entry_window_start: usize,
     pub find_target: Option<char>,
 }
@@ -56,7 +56,7 @@ impl State {
             last_action: None,
             working_directory: PathBuf::new(),
             entries: Vec::new(),
-            selected_entry: 0,
+            cursor: 0,
             entry_window_start: 0,
             find_target: None,
         };
@@ -68,7 +68,7 @@ impl State {
 
     pub fn set_working_directory(&mut self, path: PathBuf) {
         self.entries.clear();
-        self.selected_entry = 0;
+        self.cursor = 0;
         self.entry_window_start = 0;
 
         if let Some(parent) = path.parent() {
@@ -112,7 +112,7 @@ impl State {
     fn perform_find_previous(&mut self) {
         if let Some(first_char) = self.find_target {
             let mut found_index = None;
-            for i in (0..self.selected_entry).rev() {
+            for i in (0..self.cursor).rev() {
                 if self.entries[i].display.starts_with(first_char) {
                     found_index = Some(i);
                     break;
@@ -120,7 +120,7 @@ impl State {
             }
 
             if let Some(index) = found_index {
-                self.selected_entry = index;
+                self.cursor = index;
             }
         }
     }
@@ -128,7 +128,7 @@ impl State {
     fn perform_find_next(&mut self) {
         if let Some(first_char) = self.find_target {
             let mut found_index = None;
-            for i in (self.selected_entry + 1)..self.entries.len() {
+            for i in (self.cursor + 1)..self.entries.len() {
                 if self.entries[i].display.starts_with(first_char) {
                     found_index = Some(i);
                     break;
@@ -136,7 +136,7 @@ impl State {
             }
 
             if let Some(index) = found_index {
-                self.selected_entry = index;
+                self.cursor = index;
             }
         }
     }
@@ -147,26 +147,26 @@ impl State {
         match action {
             Action::Up(count) => {
                 for _ in 0..count {
-                    if self.selected_entry > 0 {
-                        self.selected_entry -= 1;
+                    if self.cursor > 0 {
+                        self.cursor -= 1;
                     }
                 }
             },
             Action::Down(count) => {
                 for _ in 0..count {
-                    if self.selected_entry < self.entries.len() - 1 {
-                        self.selected_entry += 1;
+                    if self.cursor < self.entries.len() - 1 {
+                        self.cursor += 1;
                     }
                 }
             },
             Action::Top => {
-                self.selected_entry = 0;
+                self.cursor = 0;
             },
             Action::Bottom => {
-                self.selected_entry = self.entries.len() - 1;
+                self.cursor = self.entries.len() - 1;
             },
             Action::Activate => {
-                let entry = &self.entries[self.selected_entry];
+                let entry = &self.entries[self.cursor];
 
                 if entry.is_dir {
                     self.set_working_directory(entry.path.to_path_buf());

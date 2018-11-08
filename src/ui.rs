@@ -23,12 +23,12 @@ pub fn nudge_state(state: &mut State, screen: &VirtualScreen) {
     let window_top = state.entry_window_start;
     let window_bottom = state.entry_window_start + max_item_count;
 
-    if state.selected_entry <= window_top {
-        state.entry_window_start = state.selected_entry;
+    if state.cursor <= window_top {
+        state.entry_window_start = state.cursor;
     }
 
-    if state.selected_entry >= window_bottom {
-        state.entry_window_start = state.selected_entry - max_item_count + 1;
+    if state.cursor >= window_bottom {
+        state.entry_window_start = state.cursor - max_item_count + 1;
     }
 }
 
@@ -51,7 +51,7 @@ pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScree
         if index >= window_start && index < window_start + window_size {
             let y = 2 + index - window_start;
 
-            if index == state.selected_entry {
+            if index == state.cursor {
                 screen.write_str_color(2, y, &entry.display, Color::Black, Color::White);
             } else {
                 screen.write_str(2, y, &entry.display);
