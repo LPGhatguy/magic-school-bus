@@ -51,8 +51,8 @@ Passing `--pwd` will cause the last working directory to be printed to stderr. Y
 The function I have configured in my `.profile` for Bash is:
 
 ```bash
-function brw() {
-	{ error=$(msb --pwd 2>&1 1>&$out); } {out}>&1
+brw() {
+	{ error=$(msb --pwd "$@" 2>&1 1>&$out); } {out}>&1
 
 	if [ "$?" -eq 0 ]
 	then
