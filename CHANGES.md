@@ -1,6 +1,8 @@
 # Change History
 
 ## master
+
+## 0.3.0
 - Updated status bar to be more readable
 - Added working directory bar ([#1](https://github.com/LPGhatguy/magic-school-bus/issues/1))
 - Made list rendering a little fancier

@@ -4,7 +4,7 @@ authors = ["lgreathouse <me@lpghatguy.com>"]
 description = "Cross-platform TUI filesystem browser with Vi-like keybinds"
 license = "MIT"
 repository = "https://github.com/LPGhatguy/magic-school-bus"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2018"
 
 [[bin]]
