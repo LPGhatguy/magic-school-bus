@@ -66,12 +66,10 @@ impl State {
         state
     }
 
-    pub fn set_working_directory(&mut self, path: PathBuf) {
+    fn refresh_working_directory(&mut self) {
         self.entries.clear();
-        self.cursor = 0;
-        self.entry_window_start = 0;
 
-        if let Some(parent) = path.parent() {
+        if let Some(parent) = self.working_directory.parent() {
             self.entries.push(FileEntry {
                 is_dir: true,
                 display: "..".to_string(),
@@ -79,7 +77,7 @@ impl State {
             });
         }
 
-        for entry in fs::read_dir(&path).unwrap() {
+        for entry in fs::read_dir(&self.working_directory).unwrap() {
             let entry = entry.unwrap();
             let path = entry.path();
             let mut display = path.file_name().unwrap().to_string_lossy().to_string();
@@ -98,7 +96,15 @@ impl State {
         }
 
         self.entries.sort();
+        self.cursor = self.cursor.min(self.entries.len());
+    }
+
+    pub fn set_working_directory(&mut self, path: PathBuf) {
+        self.cursor = 0;
+        self.entry_window_start = 0;
         self.working_directory = path;
+
+        self.refresh_working_directory();
     }
 
     pub fn open_file(&self, path: PathBuf) {
@@ -169,10 +175,28 @@ impl State {
                 let entry = &self.entries[self.cursor];
 
                 if entry.is_dir {
-                    self.set_working_directory(entry.path.to_path_buf());
+                    self.set_working_directory(entry.path.clone());
                 } else {
-                    self.open_file(entry.path.to_path_buf());
+                    self.open_file(entry.path.clone());
                 }
+            },
+            Action::Delete => {
+                // TODO: More elegant way to prevent user from deleting `..`?
+                if self.cursor == 0 {
+                    return;
+                }
+
+                let entry = &self.entries[self.cursor];
+
+                if entry.is_dir {
+                    fs::remove_dir_all(&entry.path)
+                        .expect("Could not remove directory and its contents!");
+                } else {
+                    fs::remove_file(&entry.path)
+                        .expect("Could not remove file!");
+                }
+
+                self.refresh_working_directory();
             },
             Action::SetAndFindNext(count, first_char) => {
                 self.find_target = Some(first_char);

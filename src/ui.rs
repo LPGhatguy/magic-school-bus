@@ -1,5 +1,5 @@
 use crate::{
-    input_state::InputState,
+    input_state::{InputState, InputMode},
     state::State,
     virtual_screen::{Color, VirtualScreen},
 };
@@ -80,18 +80,33 @@ pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScree
     screen.write_str(0, 1, top_line);
     screen.write_str(0, 2 + window_size, bottom_line);
 
-    let mut status_bar_text = "Last action: ".to_string();
+    let mut status_bar_text = String::new();
 
-    match state.last_action {
-        Some(last_action) => {
-            status_bar_text.push_str(&format!("{:?}", last_action));
+    match input_state.get_mode() {
+        InputMode::Normal => {
+            status_bar_text.push_str("Last action: ");
+
+            match state.last_action {
+                Some(last_action) => {
+                    status_bar_text.push_str(&format!("{:?}", last_action));
+                },
+                None => status_bar_text.push_str("None"),
+            };
+
+            if let Some(count) = input_state.get_count_progress() {
+                status_bar_text.push_str(" | ");
+                status_bar_text.push_str(count);
+            }
         },
-        None => status_bar_text.push_str("None"),
-    };
-
-    if let Some(count) = input_state.get_count_progress() {
-        status_bar_text.push_str(" | ");
-        status_bar_text.push_str(count);
+        InputMode::FindNextInput => {
+            status_bar_text.push_str("Find next...");
+        },
+        InputMode::FindPreviousInput => {
+            status_bar_text.push_str("Find previous...");
+        },
+        InputMode::DeletePrompt => {
+            status_bar_text.push_str("Are you sure you want to delete selected? (y or escape)")
+        },
     }
 
     pad_right_with_spaces(&mut status_bar_text, width);

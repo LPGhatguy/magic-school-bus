@@ -23,6 +23,9 @@ pub enum InputMode {
     /// Indicates that the next input should be processed as the
     /// `SetAndFindPrevious` action.
     FindPreviousInput,
+
+    /// Indicates that the user is being prompted to delete one or more entries.
+    DeletePrompt,
 }
 
 impl InputState {
@@ -31,6 +34,10 @@ impl InputState {
             mode: InputMode::Normal,
             repeat_count_buffer: String::new(),
         }
+    }
+
+    pub fn get_mode(&self) -> InputMode {
+        self.mode
     }
 
     pub fn get_count_progress(&self) -> Option<&str> {
@@ -77,6 +84,11 @@ impl InputState {
                     'k' => Some(Action::Up(self.consume_repeat_count())),
                     'g' => Some(Action::Top),
                     'G' => Some(Action::Bottom),
+                    'x' => {
+                        self.repeat_count_buffer.clear();
+                        self.mode = InputMode::DeletePrompt;
+                        None
+                    },
                     '\r' => Some(Action::Activate),
                     ';' => Some(Action::FindNext(self.consume_repeat_count())),
                     ',' => Some(Action::FindPrevious(self.consume_repeat_count())),
@@ -92,6 +104,15 @@ impl InputState {
             InputMode::FindPreviousInput => {
                 self.mode = InputMode::Normal;
                 Some(Action::SetAndFindPrevious(self.consume_repeat_count(), key))
+            },
+            InputMode::DeletePrompt => {
+                match key {
+                    'y' => {
+                        self.mode = InputMode::Normal;
+                        Some(Action::Delete)
+                    },
+                    _ => None,
+                }
             },
         }
     }

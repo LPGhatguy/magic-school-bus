@@ -23,6 +23,9 @@ pub enum Action {
     /// preferences.
     Activate,
 
+    /// Deletes the selected entries
+    Delete,
+
     /// Finds the next entry after the cursor that starts with `char`. Repeats
     /// `count` times.
     SetAndFindNext(u64, char),
