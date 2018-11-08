@@ -42,13 +42,10 @@ impl Ord for FileEntry {
 #[derive(Debug)]
 pub struct State {
     pub last_action: Option<Action>,
-    pub last_action_count: u64,
     pub working_directory: PathBuf,
     pub entries: Vec<FileEntry>,
     pub selected_entry: usize,
     pub entry_window_start: usize,
-    pub action_count_buffer: String,
-    pub in_find_specify_mode: bool,
     pub find_target: Option<char>,
 }
 
@@ -56,13 +53,10 @@ impl State {
     pub fn new(start_dir: PathBuf) -> State {
         let mut state = State {
             last_action: None,
-            last_action_count: 1,
             working_directory: PathBuf::new(),
             entries: Vec::new(),
             selected_entry: 0,
             entry_window_start: 0,
-            action_count_buffer: String::new(),
-            in_find_specify_mode: false,
             find_target: None,
         };
 
@@ -110,13 +104,6 @@ impl State {
         open::that(path).expect("Could not open file");
     }
 
-    fn consume_repeat(&mut self) -> u64 {
-        let count = self.action_count_buffer.parse::<u64>().unwrap_or(1);
-        self.action_count_buffer.clear();
-
-        count
-    }
-
     fn perform_find_previous(&mut self) {
         if let Some(first_char) = self.find_target {
             let mut found_index = None;
@@ -149,19 +136,22 @@ impl State {
         }
     }
 
-    fn perform_single_action(&mut self, action: Action) {
+    pub fn process_action(&mut self, action: Action) {
+        self.last_action = Some(action);
+
         match action {
-            Action::Cancel => {
-                self.in_find_specify_mode = false;
-            },
-            Action::Up => {
-                if self.selected_entry > 0 {
-                    self.selected_entry -= 1;
+            Action::Up(count) => {
+                for _ in 0..count {
+                    if self.selected_entry > 0 {
+                        self.selected_entry -= 1;
+                    }
                 }
             },
-            Action::Down => {
-                if self.selected_entry < self.entries.len() - 1 {
-                    self.selected_entry += 1;
+            Action::Down(count) => {
+                for _ in 0..count {
+                    if self.selected_entry < self.entries.len() - 1 {
+                        self.selected_entry += 1;
+                    }
                 }
             },
             Action::Top => {
@@ -179,46 +169,31 @@ impl State {
                     self.open_file(&entry.path);
                 }
             },
-            Action::AddToRepeatBuffer(digit) => {
-                self.action_count_buffer.push(digit);
-            },
-            Action::EnterFindSpecifyMode => {
-                self.in_find_specify_mode = true;
-            },
-            Action::SetAndFindNext(first_char) => {
-                self.in_find_specify_mode = false;
+            Action::SetAndFindNext(count, first_char) => {
                 self.find_target = Some(first_char);
-                self.perform_find_next();
+
+                for _ in 0..count {
+                    self.perform_find_next();
+                }
             },
-            Action::FindNext => {
-                self.perform_find_next();
+            Action::SetAndFindPrevious(count, first_char) => {
+                self.find_target = Some(first_char);
+
+                for _ in 0..count {
+                    self.perform_find_previous();
+                }
             },
-            Action::FindPrevious => {
-                self.perform_find_previous();
+            Action::FindNext(count) => {
+                for _ in 0..count {
+                    self.perform_find_next();
+                }
+            },
+            Action::FindPrevious(count) => {
+                for _ in 0..count {
+                    self.perform_find_previous();
+                }
             },
             _ => {},
-        }
-    }
-
-    pub fn process_action(&mut self, action: Action) {
-        if action.show_in_status_bar() {
-            self.last_action = Some(action);
-        }
-
-        let repeat_count = if action.should_consume_repeat() {
-            self.consume_repeat()
-        } else {
-            1
-        };
-
-        if action.should_repeat() {
-            for _ in 0..repeat_count {
-                self.perform_single_action(action);
-            }
-            self.last_action_count = repeat_count;
-        } else {
-            self.perform_single_action(action);
-            self.last_action_count = 1;
         }
     }
 }

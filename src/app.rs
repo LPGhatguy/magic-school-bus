@@ -36,7 +36,7 @@ fn nudge_state(state: &mut State, screen: &VirtualScreen) {
     }
 }
 
-fn render(state: &State, screen: &mut VirtualScreen) {
+fn render(state: &State, input_state: &InputState, screen: &mut VirtualScreen) {
     let (width, height) = screen.get_size();
 
     let max_item_count = height - 4;
@@ -89,26 +89,22 @@ fn render(state: &State, screen: &mut VirtualScreen) {
     match state.last_action {
         Some(last_action) => {
             status_bar_text.push_str(&format!("{:?}", last_action));
-
-            if state.last_action_count > 1 {
-                status_bar_text.push_str(&format!(" x{}", state.last_action_count));
-            }
         },
         None => status_bar_text.push_str("None"),
     };
 
-    if state.action_count_buffer.len() > 0 {
+    if let Some(count) = input_state.get_count_progress() {
         status_bar_text.push_str(" | ");
-        status_bar_text.push_str(&state.action_count_buffer);
+        status_bar_text.push_str(count);
     }
 
     pad_right_with_spaces(&mut status_bar_text, width);
     screen.write_str_color(0, height - 1, &status_bar_text, Color::Black, Color::White);
 }
 
-fn draw(state: &State, context: &TerminalContext, screen: &mut VirtualScreen) {
+fn draw(state: &State, input_state: &InputState, context: &TerminalContext, screen: &mut VirtualScreen) {
     screen.prepaint(context);
-    render(state, screen);
+    render(state, input_state, screen);
     screen.commit(context);
 }
 
@@ -126,7 +122,7 @@ pub fn start(config: AppConfig) {
     let mut screen = VirtualScreen::new(width, height);
 
     nudge_state(&mut state, &screen);
-    draw(&state, &context, &mut screen);
+    draw(&state, &input_state, &context, &mut screen);
 
     loop {
         if let Some(action) = input_state.process_input(&context) {
@@ -142,7 +138,7 @@ pub fn start(config: AppConfig) {
         }
 
         nudge_state(&mut state, &screen);
-        draw(&state, &context, &mut screen);
+        draw(&state, &input_state, &context, &mut screen);
     }
 
     drop(context);
