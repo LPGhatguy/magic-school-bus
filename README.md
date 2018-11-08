@@ -37,11 +37,15 @@ For detailed information on all options and flags, run:
 msb --help
 ```
 
-To navigate between entries, press `j` and `k`.
-
-Press `<return>` to select an entry: if it's a folder, you'll enter it, if it's a file, it'll be opened using your operating system's preferences.
-
-Press `q` to quit.
+### Motions
+- `q`: Exit
+- `j`: Move down in the list
+- `k`: Move up in the list
+- `g`: Move to the top of the list
+- `G`: Move to the bottom of the list
+- `<return>`: Select an item in the list
+	- If the item is a folder, it'll become the focus
+	- If the item is a file, it will be opened according to your operating system preferences
 
 ### Changing shell working directory
 Magic School Bus has a special mode intended to help move your shell to the location you navigated to when you exit!
