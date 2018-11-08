@@ -113,6 +113,38 @@ impl State {
         count
     }
 
+    fn perform_find_previous(&mut self) {
+        if let Some(first_char) = self.find_target {
+            let mut found_index = None;
+            for i in (0..self.selected_entry).rev() {
+                if self.entries[i].display.starts_with(first_char) {
+                    found_index = Some(i);
+                    break;
+                }
+            }
+
+            if let Some(index) = found_index {
+                self.selected_entry = index;
+            }
+        }
+    }
+
+    fn perform_find_next(&mut self) {
+        if let Some(first_char) = self.find_target {
+            let mut found_index = None;
+            for i in (self.selected_entry + 1)..self.entries.len() {
+                if self.entries[i].display.starts_with(first_char) {
+                    found_index = Some(i);
+                    break;
+                }
+            }
+
+            if let Some(index) = found_index {
+                self.selected_entry = index;
+            }
+        }
+    }
+
     fn perform_single_action(&mut self, action: Action) {
         match action {
             Action::Cancel => {
@@ -146,9 +178,19 @@ impl State {
             Action::AddToRepeatBuffer(digit) => {
                 self.action_count_buffer.push(digit);
             },
+            Action::EnterFindSpecifyMode => {
+                self.in_find_specify_mode = true;
+            },
             Action::SetFindTarget(first_char) => {
                 self.in_find_specify_mode = false;
                 self.find_target = Some(first_char);
+                self.perform_find_next();
+            },
+            Action::NextFind => {
+                self.perform_find_next();
+            },
+            Action::PreviousFind => {
+                self.perform_find_previous();
             },
             _ => {},
         }
