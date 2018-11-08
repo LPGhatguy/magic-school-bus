@@ -37,17 +37,23 @@ For detailed information on all options and flags, run:
 msb --help
 ```
 
-### Motions
+### Actions
+Actions marked with '(repeatable)' can be prefixed by a number, which will repeat the command N times.
+
 - `q`: Exit
-- `j`: Move down in the list
-- `k`: Move up in the list
+- `j`: Move down in the list (repeatable)
+- `k`: Move up in the list (repeatable)
 - `g`: Move to the top of the list
 - `G`: Move to the bottom of the list
-- `<return>`: Select an item in the list
+- `<return>`: Activate an item in the list
 	- If the item is a folder, it'll become the focus
 	- If the item is a file, it will be opened according to your operating system preferences
+- `f [character]`: Jump to the next entry starting with `[character]` (repeatable)
+- `F [character]`: Jump to the previous entry starting with `[character]` (repeatable)
+- `;`: Jump to the next entry matching the most recent find command (repeatable)
+- `,`: Jump to the previous entry matching the most recent find command (repeatable)
 
-### Changing shell working directory
+### Changing shell working directory on exit
 Magic School Bus has a special mode intended to help move your shell to the location you navigated to when you exit!
 
 Passing `--pwd` will cause the last working directory to be printed to stderr. You can set up an alias or function to capture stderr and `cd` to it if `msb` exited successfully!

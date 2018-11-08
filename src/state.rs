@@ -160,7 +160,7 @@ impl State {
             Action::Bottom => {
                 self.selected_entry = self.entries.len() - 1;
             },
-            Action::Select => {
+            Action::Activate => {
                 let entry = &self.entries[self.selected_entry];
 
                 if entry.is_dir {

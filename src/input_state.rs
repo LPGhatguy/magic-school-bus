@@ -5,15 +5,24 @@ use crate::{
 
 #[derive(Debug)]
 pub struct InputState {
-    pub mode: InputMode,
+    mode: InputMode,
     repeat_count_buffer: String,
 }
 
+/// Magic School Bus is loosely modal. InputMode is the value that determines
+/// what keys map to what actions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InputMode {
+    /// The mode from which most commands are started.
     Normal,
-    FindNextInput, // Invoked via 'f'
-    FindPreviousInput, // Invoked via 'F'
+
+    /// Indicates that the next input should be processed as the
+    /// `SetAndFindNext` action.
+    FindNextInput,
+
+    /// Indicates that the next input should be processed as the
+    /// `SetAndFindPrevious` action.
+    FindPreviousInput,
 }
 
 impl InputState {
@@ -68,7 +77,7 @@ impl InputState {
                     'k' => Some(Action::Up(self.consume_repeat_count())),
                     'g' => Some(Action::Top),
                     'G' => Some(Action::Bottom),
-                    '\r' => Some(Action::Select),
+                    '\r' => Some(Action::Activate),
                     ';' => Some(Action::FindNext(self.consume_repeat_count())),
                     ',' => Some(Action::FindPrevious(self.consume_repeat_count())),
 

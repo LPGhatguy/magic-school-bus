@@ -3,6 +3,11 @@
 ## master
 - Added command repeat information to status bar
 - Entries now show folders first, then files, both case-insensitive alphabetized.
+- Implemented find motions:
+	- `f [character]`: Jump to the next entry starting with `[character]` (repeatable)
+	- `F [character]`: Jump to the previous entry starting with `[character]` (repeatable)
+	- `;`: Jump to the next entry matching the most recent find command (repeatable)
+	- `,`: Jump to the previous entry matching the most recent find command (repeatable)
 
 ## 0.3.1
 - Added `g` (top of list) and `G` bottom of list motions ([#5](https://github.com/LPGhatguy/magic-school-bus/issues/5))
