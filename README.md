@@ -52,6 +52,8 @@ Actions marked with '(repeatable)' can be prefixed by a number, which will repea
 - `F [character]`: Jump to the previous entry starting with `[character]` (repeatable)
 - `;`: Jump to the next entry matching the most recent find command (repeatable)
 - `,`: Jump to the previous entry matching the most recent find command (repeatable)
+- `x`: Prompt to delete the selected entry
+	- Press `y` to confirm or `<escape>` to cancel
 
 ### Changing shell working directory on exit
 Magic School Bus has a special mode intended to help move your shell to the location you navigated to when you exit!

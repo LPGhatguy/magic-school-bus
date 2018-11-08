@@ -1,6 +1,8 @@
 # Change History
 
 ## master
+
+## 0.4.0
 - Added command repeat information to status bar
 - Entries now show folders first, then files, both case-insensitive alphabetized.
 - Implemented find motions:
