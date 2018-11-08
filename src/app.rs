@@ -82,12 +82,20 @@ fn render(state: &State, screen: &mut VirtualScreen) {
     screen.write_str(0, 1, top_line);
     screen.write_str(0, 2 + window_size, bottom_line);
 
-    let last_action_name = match state.last_action {
-        Some(last_action) => format!("{:?}", last_action),
-        None => "None".to_string(),
+    let mut status_bar_text = "Last action: ".to_string();
+
+    match state.last_action {
+        Some(last_action) => {
+            status_bar_text.push_str(&format!("{:?} x{}", last_action, state.last_action_count));
+        },
+        None => status_bar_text.push_str("None"),
     };
 
-    let mut status_bar_text = format!("Last action: {}", last_action_name);
+    if state.action_count_buffer.len() > 0 {
+        status_bar_text.push_str(" | ");
+        status_bar_text.push_str(&state.action_count_buffer);
+    }
+
     pad_right_with_spaces(&mut status_bar_text, width);
     screen.write_str_color(0, height - 1, &status_bar_text, Color::Black, Color::White);
 }
