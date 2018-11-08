@@ -100,6 +100,8 @@ fn process_input(context: &TerminalContext) -> Option<Action> {
             'q' => Some(Action::Quit),
             'j' => Some(Action::Down),
             'k' => Some(Action::Up),
+            'g' => Some(Action::Top),
+            'G' => Some(Action::Bottom),
             '\r' => Some(Action::Select),
             '[' => Some(Action::DebugDumpVisible),
             _ => None,

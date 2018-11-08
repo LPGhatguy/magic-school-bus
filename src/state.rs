@@ -88,6 +88,12 @@ impl State {
                     self.selected_entry += 1;
                 }
             },
+            Action::Top => {
+                self.selected_entry = 0;
+            },
+            Action::Bottom => {
+                self.selected_entry = self.entries.len() - 1;
+            },
             Action::Select => {
                 let entry = &self.entries[self.selected_entry];
 
@@ -107,6 +113,8 @@ pub enum Action {
     Quit,
     Up,
     Down,
+    Top,
+    Bottom,
     Select,
 
     DebugDumpVisible,
