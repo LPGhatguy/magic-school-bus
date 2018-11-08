@@ -103,8 +103,8 @@ impl State {
             },
             Action::Down => {
                 self.repeated(|state| {
-                    if self.selected_entry < self.entries.len() - 1 {
-                        self.selected_entry += 1;
+                    if state.selected_entry < state.entries.len() - 1 {
+                        state.selected_entry += 1;
                     }
                 });
             },
