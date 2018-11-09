@@ -40,7 +40,7 @@ fn start(config: AppConfig) {
 
     loop {
         ui::nudge_state(&mut state, &screen);
-        screen.prepaint(&context);
+        screen.render_prepare(&context);
         ui::render(&state, &input_state, &mut screen);
         screen.commit(&context);
 

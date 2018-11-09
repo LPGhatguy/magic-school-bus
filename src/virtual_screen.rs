@@ -204,7 +204,7 @@ impl VirtualScreen {
         }
     }
 
-    pub fn prepaint(&mut self, context: &TerminalContext) {
+    pub fn render_prepare(&mut self, context: &TerminalContext) {
         let (term_width, term_height) = context.get_terminal_size();
         let (width, height) = self.get_size();
 
