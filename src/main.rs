@@ -8,6 +8,7 @@ pub mod state;
 pub mod terminal_context;
 pub mod ui;
 pub mod virtual_screen;
+pub mod virtual_screen_buffer;
 
 use std::{
     env,
