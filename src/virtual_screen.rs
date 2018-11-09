@@ -38,7 +38,7 @@ impl Default for ScreenCell {
 }
 
 #[derive(Debug)]
-struct Difference {
+struct ScreenDifference {
     x: usize,
     y: usize,
     text: String,
@@ -46,7 +46,7 @@ struct Difference {
     bg: Color,
 }
 
-struct DifferenceIterator<'a> {
+struct ScreenDifferenceIterator<'a> {
     current: &'a VirtualScreenBuffer,
     previous: &'a VirtualScreenBuffer,
     x: usize,
@@ -56,15 +56,15 @@ struct DifferenceIterator<'a> {
     all_dirty: bool,
 }
 
-impl<'a> DifferenceIterator<'a> {
+impl<'a> ScreenDifferenceIterator<'a> {
     pub fn new(
         current: &'a VirtualScreenBuffer,
         previous: &'a VirtualScreenBuffer,
         all_dirty: bool,
-    ) -> DifferenceIterator<'a> {
+    ) -> ScreenDifferenceIterator<'a> {
         let (width, height) = current.get_size();
 
-        DifferenceIterator {
+        ScreenDifferenceIterator {
             current,
             previous,
             x: 0,
@@ -84,8 +84,8 @@ impl<'a> DifferenceIterator<'a> {
     }
 }
 
-impl<'a> Iterator for DifferenceIterator<'a> {
-    type Item = Difference;
+impl<'a> Iterator for ScreenDifferenceIterator<'a> {
+    type Item = ScreenDifference;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -120,7 +120,7 @@ impl<'a> Iterator for DifferenceIterator<'a> {
                 }
 
                 self.step();
-                return Some(Difference {
+                return Some(ScreenDifference {
                     x: change_x,
                     y: change_y,
                     text,
@@ -172,11 +172,15 @@ impl VirtualScreen {
         self.should_redraw_everything = true;
     }
 
+    fn get_changes(&self, whole_screen: bool) -> ScreenDifferenceIterator {
+        ScreenDifferenceIterator::new(&self.current_buffer, &self.previous_buffer, whole_screen)
+    }
+
     fn commit_changes(&mut self, context: &TerminalContext, whole_screen: bool) {
         let cursor = context.crossterm.cursor();
         cursor.hide();
 
-        for change in DifferenceIterator::new(&self.current_buffer, &self.previous_buffer, whole_screen) {
+        for change in self.get_changes(whole_screen) {
             cursor.goto(change.x as u16, change.y as u16);
             crossterm::style(&change.text)
                 .with(change.fg.into())
