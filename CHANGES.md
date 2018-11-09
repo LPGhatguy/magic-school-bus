@@ -1,6 +1,7 @@
 # Change History
 
 ## master
+- Improved resize behavior: after resizing the terminal, any action should redraw the entire screen _much_ more quickly.
 
 ## 0.4.0
 - Added command repeat information to status bar
