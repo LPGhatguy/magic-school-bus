@@ -32,7 +32,7 @@ struct AppConfig {
     start_dir: PathBuf,
 }
 
-fn start(config: AppConfig) {
+fn start(config: &AppConfig) {
     let mut state = State::new(config.start_dir.clone());
     let mut input_state = InputState::new();
     let context = TerminalContext::init();
@@ -93,7 +93,7 @@ fn main() {
         start_dir,
     };
 
-    let result = panic::catch_unwind(move || start(config));
+    let result = panic::catch_unwind(move || start(&config));
 
     if let Err(error) = result {
         let message = match error.downcast_ref::<&str>() {

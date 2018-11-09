@@ -127,3 +127,9 @@ impl InputState {
         action
     }
 }
+
+impl Default for InputState {
+    fn default() -> InputState {
+        InputState::new()
+    }
+}
