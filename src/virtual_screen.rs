@@ -136,39 +136,39 @@ impl<'a> Iterator for DifferenceIterator<'a> {
 
 #[derive(Debug)]
 pub struct VirtualScreen {
-    visible_buffer: VirtualScreenBuffer,
-    active_buffer: VirtualScreenBuffer,
+    previous_buffer: VirtualScreenBuffer,
+    current_buffer: VirtualScreenBuffer,
     should_redraw_everything: bool,
 }
 
 impl VirtualScreen {
     pub fn new(width: usize, height: usize) -> VirtualScreen {
         VirtualScreen {
-            visible_buffer: VirtualScreenBuffer::new(width, height),
-            active_buffer: VirtualScreenBuffer::new(width, height),
+            previous_buffer: VirtualScreenBuffer::new(width, height),
+            current_buffer: VirtualScreenBuffer::new(width, height),
             should_redraw_everything: false,
         }
     }
 
-    pub fn show_visible_buffer(&self) -> String {
-        self.visible_buffer.show()
+    pub fn show_previous_buffer(&self) -> String {
+        self.previous_buffer.show()
     }
 
     pub fn write_str(&mut self, x: usize, y: usize, value: &str) {
-        self.active_buffer.write_str(x, y, value);
+        self.current_buffer.write_str(x, y, value);
     }
 
     pub fn write_str_color(&mut self, x: usize, y: usize, value: &str, fg: Color, bg: Color) {
-        self.active_buffer.write_str_color(x, y, value, fg, bg);
+        self.current_buffer.write_str_color(x, y, value, fg, bg);
     }
 
     pub fn get_size(&self) -> (usize, usize) {
-        self.active_buffer.get_size()
+        self.current_buffer.get_size()
     }
 
     pub fn resize(&mut self, width: usize, height: usize) {
-        self.visible_buffer = VirtualScreenBuffer::new(width, height);
-        self.active_buffer = VirtualScreenBuffer::new(width, height);
+        self.previous_buffer = VirtualScreenBuffer::new(width, height);
+        self.current_buffer = VirtualScreenBuffer::new(width, height);
         self.should_redraw_everything = true;
     }
 
@@ -176,7 +176,7 @@ impl VirtualScreen {
         let cursor = context.crossterm.cursor();
         cursor.hide();
 
-        for change in DifferenceIterator::new(&self.active_buffer, &self.visible_buffer, whole_screen) {
+        for change in DifferenceIterator::new(&self.current_buffer, &self.previous_buffer, whole_screen) {
             cursor.goto(change.x as u16, change.y as u16);
             crossterm::style(&change.text)
                 .with(change.fg.into())
@@ -184,7 +184,7 @@ impl VirtualScreen {
                 .paint(context.get_screen());
         }
 
-        self.visible_buffer.copy_from(&self.active_buffer);
+        self.previous_buffer.copy_from(&self.current_buffer);
     }
 
     pub fn render_prepare(&mut self, context: &TerminalContext) {
@@ -195,7 +195,7 @@ impl VirtualScreen {
             self.resize(term_width, term_height);
         }
 
-        self.active_buffer.clear();
+        self.current_buffer.clear();
     }
 
     pub fn commit(&mut self, context: &TerminalContext) {
