@@ -1,12 +1,12 @@
 use crate::{
-    virtual_screen::{Block, Color},
+    virtual_screen::{ScreenCell, Color},
 };
 
 #[derive(Debug, Clone)]
 pub struct VirtualScreenBuffer {
     width: usize,
     height: usize,
-    data: Vec<Block>,
+    data: Vec<ScreenCell>,
 }
 
 impl VirtualScreenBuffer {
@@ -14,7 +14,7 @@ impl VirtualScreenBuffer {
         VirtualScreenBuffer {
             width,
             height,
-            data: vec![Block::default(); width * height],
+            data: vec![ScreenCell::default(); width * height],
         }
     }
 
@@ -24,7 +24,7 @@ impl VirtualScreenBuffer {
 
     pub fn clear(&mut self) {
         for i in 0..(self.width * self.height) {
-            self.data[i] = Block::default();
+            self.data[i] = ScreenCell::default();
         }
     }
 
@@ -35,7 +35,7 @@ impl VirtualScreenBuffer {
         self.data.copy_from_slice(&other.data);
     }
 
-    pub fn set_block(&mut self, x: usize, y: usize, block: Block) {
+    pub fn set_block(&mut self, x: usize, y: usize, block: ScreenCell) {
         if x >= self.width || y >= self.height {
             panic!("Could not write ({}, {}) on screen size ({}, {})", x, y, self.width, self.height);
         }
@@ -43,7 +43,7 @@ impl VirtualScreenBuffer {
         self.data[x + y * self.width] = block;
     }
 
-    pub fn get_block(&self, x: usize, y: usize) -> Block {
+    pub fn get_block(&self, x: usize, y: usize) -> ScreenCell {
         if x >= self.width || y >= self.height {
             panic!("Could not read ({}, {}) on screen size ({}, {})", x, y, self.width, self.height);
         }
@@ -68,7 +68,7 @@ impl VirtualScreenBuffer {
                 y += 1;
                 x = start_x;
             } else {
-                self.set_block(x, y, Block {
+                self.set_block(x, y, ScreenCell {
                     fg,
                     bg,
                     char,

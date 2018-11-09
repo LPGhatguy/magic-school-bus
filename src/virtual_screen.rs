@@ -21,15 +21,15 @@ impl Into<crossterm::Color> for Color {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Block {
+pub struct ScreenCell {
     pub fg: Color,
     pub bg: Color,
     pub char: char,
 }
 
-impl Default for Block {
-    fn default() -> Block {
-        Block {
+impl Default for ScreenCell {
+    fn default() -> ScreenCell {
+        ScreenCell {
             fg: Color::White,
             bg: Color::Black,
             char: ' ',
@@ -150,8 +150,8 @@ impl VirtualScreen {
         }
     }
 
-    pub fn show_previous_buffer(&self) -> String {
-        self.previous_buffer.show()
+    pub fn show_current_buffer(&self) -> String {
+        self.current_buffer.show()
     }
 
     pub fn write_str(&mut self, x: usize, y: usize, value: &str) {
@@ -219,7 +219,7 @@ mod test {
     fn get_and_set() {
         let (width, height) = (18, 18);
         let screen = VirtualScreenBuffer::new(width, height);
-        let default_block = Block::default();
+        let default_block = ScreenCell::default();
 
         assert_eq!(screen.get_block(0, 0), default_block);
         assert_eq!(screen.get_block(width - 1, 0), default_block);

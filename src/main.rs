@@ -53,7 +53,7 @@ fn start(config: AppConfig) {
             }
 
             if action == Action::DebugDumpVisible {
-                eprintln!("{}", screen.show_visible_buffer());
+                eprintln!("{}", screen.show_current_buffer());
             }
         }
     }
