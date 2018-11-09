@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use crossterm;
 
 use crate::{
@@ -134,6 +132,92 @@ struct Difference {
     bg: Color,
 }
 
+struct DifferenceIterator<'a> {
+    current: &'a VirtualScreenBuffer,
+    previous: &'a VirtualScreenBuffer,
+    x: usize,
+    y: usize,
+    width: usize,
+    height: usize,
+    all_dirty: bool,
+}
+
+impl<'a> DifferenceIterator<'a> {
+    pub fn new(
+        current: &'a VirtualScreenBuffer,
+        previous: &'a VirtualScreenBuffer,
+        all_dirty: bool,
+    ) -> DifferenceIterator<'a> {
+        DifferenceIterator {
+            current,
+            previous,
+            x: 0,
+            y: 0,
+            width: current.width,
+            height: current.height,
+            all_dirty,
+        }
+    }
+
+    fn step(&mut self) {
+        self.x += 1;
+        if self.x == self.width {
+            self.x = 0;
+            self.y += 1;
+        }
+    }
+}
+
+impl<'a> Iterator for DifferenceIterator<'a> {
+    type Item = Difference;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if self.y >= self.height {
+                return None;
+            }
+
+            let new_block = self.current.get_block(self.x, self.y);
+            let old_block = self.previous.get_block(self.x, self.y);
+
+            if new_block != old_block || self.all_dirty {
+                let mut text = new_block.char.to_string();
+
+                let change_x = self.x;
+                let change_y = self.y;
+
+                // Attempt to cluster contiguous text with the same colors in
+                // order to reduce the number of changes to the actual screen.
+                loop {
+                    if self.x + 1 == self.width {
+                        break;
+                    }
+
+                    let next_block = self.current.get_block(self.x + 1, self.y);
+
+                    if next_block.fg != new_block.fg || next_block.bg != new_block.bg {
+                        break;
+                    }
+
+                    text.push(next_block.char);
+                    self.x += 1;
+                }
+
+                self.step();
+                return Some(Difference {
+                    x: change_x,
+                    y: change_y,
+                    text,
+                    fg: new_block.fg,
+                    bg: new_block.bg,
+                });
+            }
+
+            self.step();
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct VirtualScreen {
     visible_buffer: VirtualScreenBuffer,
@@ -172,36 +256,19 @@ impl VirtualScreen {
         self.should_redraw_everything = true;
     }
 
-    fn commit_whole_screen(&mut self, context: &TerminalContext) {
+    fn commit_changes(&mut self, context: &TerminalContext, whole_screen: bool) {
         let cursor = context.crossterm.cursor();
-        let mut buffer = String::new();
-        let (width, height) = self.get_size();
+        cursor.hide();
 
-        for y in 0..height {
-            // TODO: Use same clustering algorithm to draw more quickly
-            for x in 0..width {
-                let block = self.active_buffer.get_block(x, y);
-
-                buffer.clear();
-                buffer.write_char(block.char).unwrap();
-                cursor.goto(x as u16, y as u16);
-                crossterm::style(&buffer).with(block.fg.into()).on(block.bg.into()).paint(context.get_screen());
-            }
-        }
-
-        self.visible_buffer.copy_from(&self.active_buffer);
-    }
-
-    fn commit_changes(&mut self, context: &TerminalContext, changes: &[Difference]) {
-        let cursor = context.crossterm.cursor();
-
-        for change in changes {
+        for change in DifferenceIterator::new(&self.active_buffer, &self.visible_buffer, whole_screen) {
             cursor.goto(change.x as u16, change.y as u16);
             crossterm::style(&change.text)
                 .with(change.fg.into())
                 .on(change.bg.into())
                 .paint(context.get_screen());
         }
+
+        self.visible_buffer.copy_from(&self.active_buffer);
     }
 
     pub fn render_prepare(&mut self, context: &TerminalContext) {
@@ -221,68 +288,10 @@ impl VirtualScreen {
         if self.should_redraw_everything {
             self.should_redraw_everything = false;
             terminal.clear(crossterm::terminal::ClearType::All);
-            self.commit_whole_screen(context);
-            return;
+            self.commit_changes(context, true);
+        } else {
+            self.commit_changes(context, false);
         }
-
-        context.crossterm.cursor().hide();
-
-        let (width, height) = self.get_size();
-        let mut changes = Vec::new();
-
-        let mut x = 0;
-        let mut y = 0;
-        loop {
-            let new_block = self.active_buffer.get_block(x, y);
-            let old_block = self.visible_buffer.get_block(x, y);
-
-            if new_block != old_block {
-                self.visible_buffer.set_block(x, y, new_block);
-
-                let mut text = new_block.char.to_string();
-
-                let change_x = x;
-                let change_y = y;
-
-                // Attempt to cluster contiguous text with the same colors in
-                // order to reduce the number of changes to the actual screen.
-                loop {
-                    if x + 1 == width {
-                        break;
-                    }
-
-                    let next_block = self.active_buffer.get_block(x + 1, y);
-
-                    if next_block.fg != new_block.fg || next_block.bg != new_block.bg {
-                        break;
-                    }
-
-                    self.visible_buffer.set_block(x + 1, y, next_block);
-                    text.push(next_block.char);
-                    x += 1;
-                }
-
-                changes.push(Difference {
-                    x: change_x,
-                    y: change_y,
-                    text,
-                    fg: new_block.fg,
-                    bg: new_block.bg,
-                });
-            }
-
-            x += 1;
-            if x == width {
-                x = 0;
-                y += 1;
-            }
-
-            if y == height {
-                break;
-            }
-        }
-
-        self.commit_changes(context, &changes);
     }
 }
 
