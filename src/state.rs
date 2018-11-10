@@ -151,7 +151,7 @@ impl State {
     }
 
     pub fn process_action(&mut self, action: Action) {
-        self.last_action = Some(action);
+        self.last_action = Some(action.clone());
 
         match action {
             Action::Up(count) => {

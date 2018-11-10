@@ -1,5 +1,5 @@
 /// Describes a complete operation that the user can perform.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
     /// Exits Magic School Bus.
     Quit,
@@ -43,6 +43,9 @@ pub enum Action {
     /// previous find command, `SetAndFindNext` or `SetAndFindPrevious`. Repeats
     /// `count` times.
     FindPrevious(u64),
+
+    /// Run a command issued by the command bar.
+    RunCommand(String),
 
     /// Dumps the current buffer to stderr to be inspected when the program
     /// closes. Usually used to debug the virtual screen implementation.

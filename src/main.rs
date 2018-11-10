@@ -46,8 +46,6 @@ fn start(config: &AppConfig) {
         screen.commit(&context);
 
         if let Some(action) = input_state.process_input(&context) {
-            state.process_action(action);
-
             if action == Action::Quit {
                 break;
             }
@@ -55,6 +53,8 @@ fn start(config: &AppConfig) {
             if action == Action::DebugDumpVisible {
                 eprintln!("{}", screen.show_current_buffer());
             }
+
+            state.process_action(action);
         }
     }
 

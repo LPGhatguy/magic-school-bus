@@ -7,6 +7,8 @@ use crate::{
 pub struct InputState {
     mode: InputMode,
     repeat_count_buffer: String,
+    command_buffer: Vec<char>,
+    command_cursor: usize,
 }
 
 /// Magic School Bus is loosely modal. InputMode is the value that determines
@@ -26,6 +28,9 @@ pub enum InputMode {
 
     /// Indicates that the user is being prompted to delete one or more entries.
     DeletePrompt,
+
+    /// Command line mode, inputs should edit text.
+    Command,
 }
 
 impl InputState {
@@ -33,6 +38,8 @@ impl InputState {
         InputState {
             mode: InputMode::Normal,
             repeat_count_buffer: String::new(),
+            command_buffer: Vec::new(),
+            command_cursor: 0,
         }
     }
 
@@ -46,6 +53,14 @@ impl InputState {
         } else {
             Some(&self.repeat_count_buffer)
         }
+    }
+
+    pub fn get_cursor_position(&self) -> usize {
+        self.command_cursor
+    }
+
+    pub fn get_command_buffer(&self) -> &[char] {
+        &self.command_buffer
     }
 
     fn consume_repeat_count(&mut self) -> u64 {
@@ -80,6 +95,12 @@ impl InputState {
                         self.mode = InputMode::FindPreviousInput;
                         None
                     },
+                    ':' => {
+                        self.command_cursor = 0;
+                        self.command_buffer.clear();
+                        self.mode = InputMode::Command;
+                        None
+                    },
                     'j' => Some(Action::Down(self.consume_repeat_count())),
                     'k' => Some(Action::Up(self.consume_repeat_count())),
                     'g' => Some(Action::Top),
@@ -112,6 +133,26 @@ impl InputState {
                         Some(Action::Delete)
                     },
                     _ => None,
+                }
+            },
+            InputMode::Command => {
+                match key {
+                    '\r' => {
+                        let command: String = self.command_buffer.iter().collect();
+                        self.mode = InputMode::Normal;
+                        Some(Action::RunCommand(command))
+                    },
+                    '\u{8}' => {
+                        if self.command_buffer.pop().is_some() {
+                            self.command_cursor -= 1;
+                        }
+                        None
+                    },
+                    _ => {
+                        self.command_buffer.push(key);
+                        self.command_cursor = self.command_buffer.len();
+                        None
+                    },
                 }
             },
         }

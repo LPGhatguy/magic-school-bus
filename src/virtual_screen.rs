@@ -188,6 +188,12 @@ impl VirtualScreen {
                 .paint(context.get_screen());
         }
 
+        if let Some((cursor_x, cursor_y)) = self.current_buffer.cursor_position {
+            cursor.goto(cursor_x as u16, cursor_y as u16);
+            cursor.show();
+        }
+
+        self.previous_buffer.cursor_position = self.current_buffer.cursor_position;
         self.previous_buffer.copy_from(&self.current_buffer);
     }
 
@@ -200,6 +206,10 @@ impl VirtualScreen {
         }
 
         self.current_buffer.clear();
+    }
+
+    pub fn set_cursor_position(&mut self, x: usize, y: usize) {
+        self.current_buffer.cursor_position = Some((x, y));
     }
 
     pub fn commit(&mut self, context: &TerminalContext) {

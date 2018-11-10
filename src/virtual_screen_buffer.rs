@@ -7,6 +7,7 @@ pub struct VirtualScreenBuffer {
     width: usize,
     height: usize,
     data: Vec<ScreenCell>,
+    pub cursor_position: Option<(usize, usize)>,
 }
 
 impl VirtualScreenBuffer {
@@ -15,6 +16,7 @@ impl VirtualScreenBuffer {
             width,
             height,
             data: vec![ScreenCell::default(); width * height],
+            cursor_position: None,
         }
     }
 
@@ -26,6 +28,7 @@ impl VirtualScreenBuffer {
         for i in 0..(self.width * self.height) {
             self.data[i] = ScreenCell::default();
         }
+        self.cursor_position = None;
     }
 
     pub fn copy_from(&mut self, other: &VirtualScreenBuffer) {

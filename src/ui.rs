@@ -86,7 +86,7 @@ pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScree
         InputMode::Normal => {
             status_bar_text.push_str("Last action: ");
 
-            match state.last_action {
+            match &state.last_action {
                 Some(last_action) => {
                     status_bar_text.push_str(&format!("{:?}", last_action));
                 },
@@ -106,6 +106,15 @@ pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScree
         },
         InputMode::DeletePrompt => {
             status_bar_text.push_str("Are you sure you want to delete selected? (y or escape)")
+        },
+        InputMode::Command => {
+            status_bar_text.push(':');
+
+            for &char in input_state.get_command_buffer() {
+                status_bar_text.push(char);
+            }
+
+            screen.set_cursor_position(1 + input_state.get_cursor_position(), height - 1);
         },
     }
 
