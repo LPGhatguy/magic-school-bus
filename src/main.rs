@@ -35,7 +35,7 @@ struct AppConfig {
 fn start(config: &AppConfig) {
     let mut state = State::new(config.start_dir.clone());
     let mut input_state = InputState::new();
-    let context = TerminalContext::init();
+    let mut context = TerminalContext::init();
     let (width, height) = context.get_terminal_size();
     let mut screen = VirtualScreen::new(width, height);
 
@@ -43,9 +43,9 @@ fn start(config: &AppConfig) {
         ui::nudge_state(&mut state, &screen);
         screen.render_prepare(&context);
         ui::render(&state, &input_state, &mut screen);
-        screen.commit(&context);
+        screen.commit(&mut context);
 
-        if let Some(action) = input_state.process_input(&context) {
+        if let Some(action) = input_state.process_input(&mut context) {
             if action == Action::Quit {
                 break;
             }

@@ -1,24 +1,7 @@
-use crossterm;
-
 use crate::{
-    terminal_context::TerminalContext,
+    terminal_context::{Color, TerminalContext},
     virtual_screen_buffer::VirtualScreenBuffer,
 };
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Color {
-    Black,
-    White,
-}
-
-impl Into<crossterm::Color> for Color {
-    fn into(self) -> crossterm::Color {
-        match self {
-            Color::Black => crossterm::Color::Black,
-            Color::White => crossterm::Color::White,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ScreenCell {
@@ -176,21 +159,17 @@ impl VirtualScreen {
         ScreenDifferenceIterator::new(&self.current_buffer, &self.previous_buffer, whole_screen)
     }
 
-    fn commit_changes(&mut self, context: &TerminalContext, whole_screen: bool) {
-        let cursor = context.crossterm.cursor();
-        cursor.hide();
+    fn commit_changes(&mut self, context: &mut TerminalContext, whole_screen: bool) {
+        context.hide_cursor();
 
         for change in self.get_changes(whole_screen) {
-            cursor.goto(change.x as u16, change.y as u16);
-            crossterm::style(&change.text)
-                .with(change.fg.into())
-                .on(change.bg.into())
-                .paint(context.get_screen());
+            context.move_cursor(change.x, change.y);
+            context.paint_str(&change.text, change.fg, change.bg);
         }
 
         if let Some((cursor_x, cursor_y)) = self.current_buffer.cursor_position {
-            cursor.goto(cursor_x as u16, cursor_y as u16);
-            cursor.show();
+            context.move_cursor(cursor_x, cursor_y);
+            context.show_cursor();
         }
 
         self.previous_buffer.cursor_position = self.current_buffer.cursor_position;
@@ -212,12 +191,10 @@ impl VirtualScreen {
         self.current_buffer.cursor_position = Some((x, y));
     }
 
-    pub fn commit(&mut self, context: &TerminalContext) {
-        let terminal = context.crossterm.terminal();
-
+    pub fn commit(&mut self, context: &mut TerminalContext) {
         if self.should_redraw_everything {
             self.should_redraw_everything = false;
-            terminal.clear(crossterm::terminal::ClearType::All);
+            context.clear_screen();
             self.commit_changes(context, true);
         } else {
             self.commit_changes(context, false);

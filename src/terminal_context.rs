@@ -1,12 +1,28 @@
+use std::io;
+
 use crossterm::{
     Crossterm,
     Screen,
     AlternateScreen,
 };
 
-pub struct TerminalContext {
-    pub crossterm: Crossterm,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Color {
+    Black,
+    White,
+}
 
+impl Into<crossterm::Color> for Color {
+    fn into(self) -> crossterm::Color {
+        match self {
+            Color::Black => crossterm::Color::Black,
+            Color::White => crossterm::Color::White,
+        }
+    }
+}
+
+pub struct TerminalContext {
+    crossterm: Crossterm,
     alternate_screen: AlternateScreen,
 }
 
@@ -22,10 +38,6 @@ impl TerminalContext {
         }
     }
 
-    pub fn get_screen(&self) -> &Screen {
-        &self.alternate_screen.screen
-    }
-
     pub fn get_terminal_size(&self) -> (usize, usize) {
         let terminal = self.crossterm.terminal();
         let (term_width, term_height) = {
@@ -34,5 +46,37 @@ impl TerminalContext {
         };
 
         (term_width + 1, term_height + 1)
+    }
+
+    pub fn read_char(&mut self) -> io::Result<char> {
+        let input = self.crossterm.input();
+        input.read_char()
+    }
+
+    pub fn paint_str(&mut self, text: &str, fg: Color, bg: Color) {
+        crossterm::style(text)
+            .with(fg.into())
+            .on(bg.into())
+            .paint(&self.alternate_screen.screen);
+    }
+
+    pub fn clear_screen(&mut self) {
+        let terminal = self.crossterm.terminal();
+        terminal.clear(crossterm::terminal::ClearType::All);
+    }
+
+    pub fn show_cursor(&mut self) {
+        let cursor = self.crossterm.cursor();
+        cursor.show();
+    }
+
+    pub fn hide_cursor(&mut self) {
+        let cursor = self.crossterm.cursor();
+        cursor.hide();
+    }
+
+    pub fn move_cursor(&mut self, x: usize, y: usize) {
+        let cursor = self.crossterm.cursor();
+        cursor.goto(x as u16, y as u16);
     }
 }

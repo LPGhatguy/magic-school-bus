@@ -1,7 +1,8 @@
 use crate::{
     input_state::{InputState, InputMode},
     state::State,
-    virtual_screen::{Color, VirtualScreen},
+    virtual_screen::VirtualScreen,
+    terminal_context::{Color},
 };
 
 fn pad_right_with_spaces(text: &mut String, width: usize) {

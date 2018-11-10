@@ -70,9 +70,8 @@ impl InputState {
         count
     }
 
-    fn process_input_internal(&mut self, context: &TerminalContext) -> Option<Action> {
-        let input = context.crossterm.input();
-        let key = input.read_char().ok()?;
+    fn process_input_internal(&mut self, context: &mut TerminalContext) -> Option<Action> {
+        let key = context.read_char().ok()?;
 
         if key == '\u{1b}' {
             self.mode = InputMode::Normal;
@@ -158,7 +157,7 @@ impl InputState {
         }
     }
 
-    pub fn process_input(&mut self, context: &TerminalContext) -> Option<Action> {
+    pub fn process_input(&mut self, context: &mut TerminalContext) -> Option<Action> {
         let action = self.process_input_internal(context);
 
         if action.is_some() {

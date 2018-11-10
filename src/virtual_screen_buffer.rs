@@ -1,5 +1,6 @@
 use crate::{
-    virtual_screen::{ScreenCell, Color},
+    virtual_screen::ScreenCell,
+    terminal_context::Color,
 };
 
 #[derive(Debug, Clone)]
