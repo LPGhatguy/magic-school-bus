@@ -7,6 +7,10 @@ Magic School Bus is a terminal UI filesystem browser with Vi-inspired keybinding
 It's an early work in progress, but runs on Windows, MacOS, and Linux!
 
 ## Installation
+### Windows
+Pre-built binaries are available on the [GitHub Releases page](https://github.com/LPGhatguy/magic-school-bus/releases).
+
+### Other Platforms and Rust Developers
 Magic School Bus needs **Rust Beta 1.31** or newer to build since it uses features from the upcoming Rust 2018 Edition. That'll change when the edition reaches stable at the beginning of **December, 2018**!
 
 If you already have Rustup installed, you can grab Magic School Bus with:
