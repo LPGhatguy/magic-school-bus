@@ -1,6 +1,8 @@
 # Change History
 
 ## master
+
+## 0.5.0
 - Improved resize behavior: after resizing the terminal, any action should redraw the entire screen _much_ more quickly.
 - Implemented command bar (`:`) with no commands
 - Implemented new motions:
