@@ -108,14 +108,34 @@ pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScree
         InputMode::DeletePrompt => {
             status_bar_text.push_str("Are you sure you want to delete selected? (y or escape)")
         },
-        InputMode::Command => {
+        InputMode::CommandPrompt => {
             status_bar_text.push(':');
 
-            for &char in input_state.get_command_buffer() {
+            for &char in input_state.get_text_buffer() {
                 status_bar_text.push(char);
             }
 
             screen.set_cursor_position(1 + input_state.get_cursor_position(), height - 1);
+        },
+        InputMode::NewFilePrompt => {
+            let prompt_string = "New file: ";
+            status_bar_text.push_str(prompt_string);
+
+            for &char in input_state.get_text_buffer() {
+                status_bar_text.push(char);
+            }
+
+            screen.set_cursor_position(prompt_string.len() + input_state.get_cursor_position(), height - 1);
+        },
+        InputMode::NewDirectoryPrompt => {
+            let prompt_string = "New dir: ";
+            status_bar_text.push_str(prompt_string);
+
+            for &char in input_state.get_text_buffer() {
+                status_bar_text.push(char);
+            }
+
+            screen.set_cursor_position(prompt_string.len() + input_state.get_cursor_position(), height - 1);
         },
     }
 

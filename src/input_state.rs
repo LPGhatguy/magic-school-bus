@@ -7,8 +7,8 @@ use crate::{
 pub struct InputState {
     mode: InputMode,
     repeat_count_buffer: String,
-    command_buffer: Vec<char>,
-    command_cursor: usize,
+    text_buffer: Vec<char>,
+    text_cursor: usize,
 }
 
 /// Magic School Bus is loosely modal. InputMode is the value that determines
@@ -29,8 +29,14 @@ pub enum InputMode {
     /// Indicates that the user is being prompted to delete one or more entries.
     DeletePrompt,
 
+    /// Indicates that the user is entering a name for a new file.
+    NewFilePrompt,
+
+    /// Indicates that the user is entering a name for a new directory.
+    NewDirectoryPrompt,
+
     /// Command line mode, inputs should edit text.
-    Command,
+    CommandPrompt,
 }
 
 impl InputState {
@@ -38,8 +44,8 @@ impl InputState {
         InputState {
             mode: InputMode::Normal,
             repeat_count_buffer: String::new(),
-            command_buffer: Vec::new(),
-            command_cursor: 0,
+            text_buffer: Vec::new(),
+            text_cursor: 0,
         }
     }
 
@@ -56,11 +62,11 @@ impl InputState {
     }
 
     pub fn get_cursor_position(&self) -> usize {
-        self.command_cursor
+        self.text_cursor
     }
 
-    pub fn get_command_buffer(&self) -> &[char] {
-        &self.command_buffer
+    pub fn get_text_buffer(&self) -> &[char] {
+        &self.text_buffer
     }
 
     fn consume_repeat_count(&mut self) -> u64 {
@@ -68,6 +74,20 @@ impl InputState {
         self.repeat_count_buffer.clear();
 
         count
+    }
+
+    fn handle_text_key(&mut self, key: char) {
+        match key {
+            '\u{8}' => {
+                if self.text_buffer.pop().is_some() {
+                    self.text_cursor -= 1;
+                }
+            },
+            _ => {
+                self.text_buffer.push(key);
+                self.text_cursor = self.text_buffer.len();
+            },
+        }
     }
 
     fn process_input_internal(&mut self, context: &mut TerminalContext) -> Option<Action> {
@@ -94,16 +114,29 @@ impl InputState {
                         self.mode = InputMode::FindPreviousInput;
                         None
                     },
+                    'n' => {
+                        self.text_cursor = 0;
+                        self.text_buffer.clear();
+                        self.mode = InputMode::NewFilePrompt;
+                        None
+                    },
+                    'N' => {
+                        self.text_cursor = 0;
+                        self.text_buffer.clear();
+                        self.mode = InputMode::NewDirectoryPrompt;
+                        None
+                    },
                     ':' => {
-                        self.command_cursor = 0;
-                        self.command_buffer.clear();
-                        self.mode = InputMode::Command;
+                        self.text_cursor = 0;
+                        self.text_buffer.clear();
+                        self.mode = InputMode::CommandPrompt;
                         None
                     },
                     'j' => Some(Action::Down(self.consume_repeat_count())),
                     'k' => Some(Action::Up(self.consume_repeat_count())),
                     'g' => Some(Action::Top),
                     'G' => Some(Action::Bottom),
+                    'r' => Some(Action::Refresh),
                     'x' => {
                         self.repeat_count_buffer.clear();
                         self.mode = InputMode::DeletePrompt;
@@ -134,22 +167,44 @@ impl InputState {
                     _ => None,
                 }
             },
-            InputMode::Command => {
+            InputMode::CommandPrompt => {
                 match key {
                     '\r' => {
-                        let command: String = self.command_buffer.iter().collect();
+                        let text: String = self.text_buffer.iter().collect();
                         self.mode = InputMode::Normal;
-                        Some(Action::RunCommand(command))
-                    },
-                    '\u{8}' => {
-                        if self.command_buffer.pop().is_some() {
-                            self.command_cursor -= 1;
-                        }
-                        None
+
+                        Some(Action::RunCommand(text))
                     },
                     _ => {
-                        self.command_buffer.push(key);
-                        self.command_cursor = self.command_buffer.len();
+                        self.handle_text_key(key);
+                        None
+                    },
+                }
+            },
+            InputMode::NewFilePrompt => {
+                match key {
+                    '\r' => {
+                        let text: String = self.text_buffer.iter().collect();
+                        self.mode = InputMode::Normal;
+
+                        Some(Action::CreateFile(text))
+                    },
+                    _ => {
+                        self.handle_text_key(key);
+                        None
+                    },
+                }
+            },
+            InputMode::NewDirectoryPrompt => {
+                match key {
+                    '\r' => {
+                        let text: String = self.text_buffer.iter().collect();
+                        self.mode = InputMode::Normal;
+
+                        Some(Action::CreateDirectory(text))
+                    },
+                    _ => {
+                        self.handle_text_key(key);
                         None
                     },
                 }

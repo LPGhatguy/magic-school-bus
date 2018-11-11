@@ -2,7 +2,7 @@ use open;
 
 use std::{
     cmp::Ordering,
-    fs,
+    fs::{self, File},
     path::PathBuf,
     thread,
 };
@@ -150,6 +150,22 @@ impl State {
         }
     }
 
+    fn find_entry_with_file_name(&self, name: &str) -> Option<usize> {
+        self.entries
+            .iter()
+            .enumerate()
+            .find(|(_, entry)| {
+                match entry.path.file_name() {
+                    Some(file_name) => match file_name.to_str() {
+                        Some(file_name) => file_name == name,
+                        None => false,
+                    },
+                    None => false,
+                }
+            })
+            .map(|(index, _)| index)
+    }
+
     pub fn process_action(&mut self, action: Action) {
         self.last_action = Some(action.clone());
 
@@ -201,6 +217,35 @@ impl State {
                     FileEntryKind::Parent => {},
                 }
 
+                self.refresh_working_directory();
+            },
+            Action::CreateFile(name) => {
+                let path = self.working_directory.join(&name);
+                File::create(path)
+                    .expect("Could not create file!");
+
+                self.refresh_working_directory();
+
+                // Move the cursor to highlight the new entry.
+                let new_cursor = self.find_entry_with_file_name(&name)
+                    .unwrap_or(self.cursor);
+
+                self.cursor = new_cursor;
+            },
+            Action::CreateDirectory(name) => {
+                let path = self.working_directory.join(&name);
+                fs::create_dir(path)
+                    .expect("Could not create directory!");
+
+                self.refresh_working_directory();
+
+                // Move the cursor to highlight the new entry.
+                let new_cursor = self.find_entry_with_file_name(&name)
+                    .unwrap_or(self.cursor);
+
+                self.cursor = new_cursor;
+            },
+            Action::Refresh => {
                 self.refresh_working_directory();
             },
             Action::SetAndFindNext(count, first_char) => {

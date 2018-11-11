@@ -3,6 +3,10 @@
 ## master
 - Improved resize behavior: after resizing the terminal, any action should redraw the entire screen _much_ more quickly.
 - Implemented command bar (`:`) with no commands
+- Implemented new motions:
+	- `n`: Create a new file, prompted for a name
+	- `N`: Create a new directory, prompted for a name
+	- `r`: Refresh the view, in case of changes from another program
 
 ## 0.4.0
 - Added command repeat information to status bar

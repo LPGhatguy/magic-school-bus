@@ -23,8 +23,17 @@ pub enum Action {
     /// preferences.
     Activate,
 
-    /// Deletes the selected entries
+    /// Deletes the selected entries.
     Delete,
+
+    /// Creates a file here.
+    CreateFile(String),
+
+    /// Creates a directory here.
+    CreateDirectory(String),
+
+    /// Refreshes the directory view.
+    Refresh,
 
     /// Finds the next entry after the cursor that starts with `char`. Repeats
     /// `count` times.
