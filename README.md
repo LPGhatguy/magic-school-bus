@@ -7,6 +7,7 @@ Magic School Bus is a terminal UI filesystem browser with Vi-inspired keybinding
 It's an early work in progress, but runs on Windows, MacOS, and Linux!
 
 ## Installation
+
 ### Windows
 Pre-built binaries are available on the [GitHub Releases page](https://github.com/LPGhatguy/magic-school-bus/releases).
 
