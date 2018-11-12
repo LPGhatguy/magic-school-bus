@@ -37,6 +37,7 @@ impl TerminalContext {
     }
 
     pub fn read_char(&mut self) -> io::Result<char> {
+        // TODO: Port everything from read_char to read_key
         match self.read_key() {
             Key::Char(char) => Ok(char),
             _ => Ok(' '),
