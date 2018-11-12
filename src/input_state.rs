@@ -18,24 +18,19 @@ pub enum InputMode {
     /// The mode from which most commands are started.
     Normal,
 
-    /// Indicates that the next input should be processed as the
-    /// `SetAndFindNext` action.
-    FindNextInput,
+    /// The user is entering a search string to find files.
+    FindPrompt,
 
-    /// Indicates that the next input should be processed as the
-    /// `SetAndFindPrevious` action.
-    FindPreviousInput,
-
-    /// Indicates that the user is being prompted to delete one or more entries.
+    /// The user is being prompted to delete one or more entries.
     DeletePrompt,
 
-    /// Indicates that the user is entering a name for a new file.
+    /// The user is entering a name for a new file.
     NewFilePrompt,
 
-    /// Indicates that the user is entering a name for a new directory.
+    /// The user is entering a name for a new directory.
     NewDirectoryPrompt,
 
-    /// Command line mode, inputs should edit text.
+    /// The user is entering a command to run.
     CommandPrompt,
 }
 
@@ -107,12 +102,11 @@ impl InputState {
                         None
                     },
                     'f' => {
-                        self.mode = InputMode::FindNextInput;
-                        None
-                    },
-                    'F' => {
-                        self.mode = InputMode::FindPreviousInput;
-                        None
+                        self.text_cursor = 0;
+                        self.text_buffer.clear();
+                        self.mode = InputMode::FindPrompt;
+
+                        Some(Action::Find(String::new()))
                     },
                     'n' => {
                         self.text_cursor = 0;
@@ -143,20 +137,10 @@ impl InputState {
                         None
                     },
                     '\r' => Some(Action::Activate),
-                    ';' => Some(Action::FindNext(self.consume_repeat_count())),
-                    ',' => Some(Action::FindPrevious(self.consume_repeat_count())),
 
                     '[' => Some(Action::DebugDumpVisible),
                     _ => Some(Action::Unknown(key)),
                 }
-            },
-            InputMode::FindNextInput => {
-                self.mode = InputMode::Normal;
-                Some(Action::SetAndFindNext(self.consume_repeat_count(), key))
-            },
-            InputMode::FindPreviousInput => {
-                self.mode = InputMode::Normal;
-                Some(Action::SetAndFindPrevious(self.consume_repeat_count(), key))
             },
             InputMode::DeletePrompt => {
                 match key {
@@ -165,6 +149,23 @@ impl InputState {
                         Some(Action::Delete)
                     },
                     _ => None,
+                }
+            },
+            InputMode::FindPrompt => {
+                match key {
+                    '\r' => {
+                        self.mode = InputMode::Normal;
+                        None
+                    },
+                    '\t' => {
+                        Some(Action::FindNext)
+                    },
+                    _ => {
+                        self.handle_text_key(key);
+                        let text: String = self.text_buffer.iter().collect();
+
+                        Some(Action::Find(text))
+                    },
                 }
             },
             InputMode::CommandPrompt => {

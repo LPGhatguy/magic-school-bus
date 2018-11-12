@@ -50,7 +50,8 @@ pub struct State {
     pub entries: Vec<FileEntry>,
     pub cursor: usize,
     pub entry_window_start: usize,
-    pub find_target: Option<char>,
+    pub find_target: String,
+    pub no_find_match: bool,
 }
 
 impl State {
@@ -61,7 +62,8 @@ impl State {
             entries: Vec::new(),
             cursor: 0,
             entry_window_start: 0,
-            find_target: None,
+            find_target: String::new(),
+            no_find_match: false,
         };
 
         state.set_working_directory(start_dir);
@@ -118,35 +120,38 @@ impl State {
         });
     }
 
-    fn perform_find_previous(&mut self) {
-        if let Some(first_char) = self.find_target {
-            let mut found_index = None;
-            for i in (0..self.cursor).rev() {
-                if self.entries[i].display.starts_with(first_char) {
-                    found_index = Some(i);
-                    break;
-                }
-            }
+    fn perform_find(&mut self) {
+        let found_index = self.entries
+            .iter()
+            .enumerate()
+            .find(|(_, entry)| entry.display.starts_with(&self.find_target));
 
-            if let Some(index) = found_index {
-                self.cursor = index;
-            }
+        if let Some((index, _)) = found_index {
+            self.cursor = index;
+            self.no_find_match = false;
+        } else {
+            self.no_find_match = true;
         }
     }
 
     fn perform_find_next(&mut self) {
-        if let Some(first_char) = self.find_target {
-            let mut found_index = None;
-            for i in (self.cursor + 1)..self.entries.len() {
-                if self.entries[i].display.starts_with(first_char) {
-                    found_index = Some(i);
-                    break;
-                }
-            }
+        let mut found_index = None;
+        let first_range = (self.cursor + 1)..self.entries.len();
+        let second_range = 0..self.cursor;
+        let iter = first_range.chain(second_range);
 
-            if let Some(index) = found_index {
-                self.cursor = index;
+        for i in iter {
+            if self.entries[i].display.starts_with(&self.find_target) {
+                found_index = Some(i);
+                break;
             }
+        }
+
+        if let Some(index) = found_index {
+            self.cursor = index;
+            self.no_find_match = false;
+        } else {
+            self.no_find_match = true;
         }
     }
 
@@ -248,29 +253,14 @@ impl State {
             Action::Refresh => {
                 self.refresh_working_directory();
             },
-            Action::SetAndFindNext(count, first_char) => {
-                self.find_target = Some(first_char);
+            Action::Find(target) => {
+                self.find_target = target;
+                self.cursor = 0;
 
-                for _ in 0..count {
-                    self.perform_find_next();
-                }
+                self.perform_find();
             },
-            Action::SetAndFindPrevious(count, first_char) => {
-                self.find_target = Some(first_char);
-
-                for _ in 0..count {
-                    self.perform_find_previous();
-                }
-            },
-            Action::FindNext(count) => {
-                for _ in 0..count {
-                    self.perform_find_next();
-                }
-            },
-            Action::FindPrevious(count) => {
-                for _ in 0..count {
-                    self.perform_find_previous();
-                }
+            Action::FindNext => {
+                self.perform_find_next();
             },
             _ => {},
         }

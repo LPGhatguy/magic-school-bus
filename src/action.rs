@@ -35,23 +35,9 @@ pub enum Action {
     /// Refreshes the directory view.
     Refresh,
 
-    /// Finds the next entry after the cursor that starts with `char`. Repeats
-    /// `count` times.
-    SetAndFindNext(u64, char),
+    Find(String),
 
-    /// Finds the previous entry before the cursor that starts with `char`.
-    /// Repeats `count` times.
-    SetAndFindPrevious(u64, char),
-
-    /// Finds the next entry after the cursor using the search from the previous
-    /// find command, `SetAndFindNext` or `SetAndFindPrevious`. Repeats `count`
-    /// times.
-    FindNext(u64),
-
-    /// Finds the previous entry before the cursor using the search from the
-    /// previous find command, `SetAndFindNext` or `SetAndFindPrevious`. Repeats
-    /// `count` times.
-    FindPrevious(u64),
+    FindNext,
 
     /// Run a command issued by the command bar.
     RunCommand(String),

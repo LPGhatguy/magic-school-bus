@@ -1,6 +1,11 @@
 # Change History
 
 ## master
+- Changed find mechanics ([#12](https://github.com/LPGhatguy/magic-school-bus/issues/12))
+	- `f` now enters a prompt to enter a file prefix to find
+		- tab cycles options (shift-tab can't work because of library limitations right now)
+		- return or escape exits the prompt
+	- `F`, `,` and `;` motions were removed
 
 ## 0.5.0
 - Improved resize behavior: after resizing the terminal, any action should redraw the entire screen _much_ more quickly.

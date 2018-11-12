@@ -81,6 +81,8 @@ pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScree
     screen.write_str(0, 1, top_line);
     screen.write_str(0, 2 + window_size, bottom_line);
 
+    let mut prompt_foreground = Color::Black;
+    let mut prompt_background = Color::White;
     let mut status_bar_text = String::new();
 
     match input_state.get_mode() {
@@ -99,14 +101,23 @@ pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScree
                 status_bar_text.push_str(count);
             }
         },
-        InputMode::FindNextInput => {
-            status_bar_text.push_str("Find next...");
-        },
-        InputMode::FindPreviousInput => {
-            status_bar_text.push_str("Find previous...");
-        },
         InputMode::DeletePrompt => {
             status_bar_text.push_str("Are you sure you want to delete selected? (y or escape)")
+        },
+        InputMode::FindPrompt => {
+            let prompt_string = "Find: ";
+            status_bar_text.push_str(prompt_string);
+
+            for &char in input_state.get_text_buffer() {
+                status_bar_text.push(char);
+            }
+
+            if state.no_find_match {
+                prompt_foreground = Color::White;
+                prompt_background = Color::Red;
+            }
+
+            screen.set_cursor_position(prompt_string.len() + input_state.get_cursor_position(), height - 1);
         },
         InputMode::CommandPrompt => {
             status_bar_text.push(':');
@@ -140,5 +151,5 @@ pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScree
     }
 
     pad_right_with_spaces(&mut status_bar_text, width);
-    screen.write_str_color(0, height - 1, &status_bar_text, Color::Black, Color::White);
+    screen.write_str_color(0, height - 1, &status_bar_text, prompt_foreground, prompt_background);
 }

@@ -10,6 +10,7 @@ use crossterm::{
 pub enum Color {
     Black,
     White,
+    Red,
 }
 
 impl Into<crossterm::Color> for Color {
@@ -17,6 +18,7 @@ impl Into<crossterm::Color> for Color {
         match self {
             Color::Black => crossterm::Color::Black,
             Color::White => crossterm::Color::White,
+            Color::Red => crossterm::Color::Red,
         }
     }
 }
