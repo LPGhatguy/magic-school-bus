@@ -1,84 +1,67 @@
-use std::io;
-
-use crossterm::{
-    Crossterm,
-    Screen,
-    AlternateScreen,
+use std::{
+    sync::{Arc, Mutex},
+    io,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Color {
-    Black,
-    White,
-    Red,
-}
+use all_term::{terminal, Style, Terminal};
 
-impl Into<crossterm::Color> for Color {
-    fn into(self) -> crossterm::Color {
-        match self {
-            Color::Black => crossterm::Color::Black,
-            Color::White => crossterm::Color::White,
-            Color::Red => crossterm::Color::Red,
-        }
-    }
-}
+pub use all_term::{Color, Key};
 
 pub struct TerminalContext {
-    crossterm: Crossterm,
-    alternate_screen: AlternateScreen,
+    terminal: Arc<Mutex<Terminal>>,
 }
 
 impl TerminalContext {
     pub fn init() -> TerminalContext {
-        let screen = Screen::default();
-        let alternate = screen.enable_alternate_modes(true).unwrap();
-        let crossterm = Crossterm::new(&alternate.screen);
+        let terminal = terminal();
+
+        {
+            let mut handle = terminal.lock().unwrap();
+            handle.enable_alternate_screen();
+            handle.enable_raw_mode();
+        }
 
         TerminalContext {
-            crossterm,
-            alternate_screen: alternate,
+            terminal,
         }
     }
 
     pub fn get_terminal_size(&self) -> (usize, usize) {
-        let terminal = self.crossterm.terminal();
-        let (term_width, term_height) = {
-            let size = terminal.terminal_size();
-            (size.0 as usize, size.1 as usize)
-        };
+        let handle = self.terminal.lock().unwrap();
+        handle.get_size()
+    }
 
-        (term_width + 1, term_height + 1)
+    pub fn read_key(&mut self) -> Key {
+        let mut handle = self.terminal.lock().unwrap();
+        handle.read_key()
     }
 
     pub fn read_char(&mut self) -> io::Result<char> {
-        let input = self.crossterm.input();
-        input.read_char()
+        unimplemented!()
     }
 
     pub fn paint_str(&mut self, text: &str, fg: Color, bg: Color) {
-        crossterm::style(text)
-            .with(fg.into())
-            .on(bg.into())
-            .paint(&self.alternate_screen.screen);
+        let mut handle = self.terminal.lock().unwrap();
+        handle.print(text, Style::new().fg(fg).bg(bg));
     }
 
     pub fn clear_screen(&mut self) {
-        let terminal = self.crossterm.terminal();
-        terminal.clear(crossterm::terminal::ClearType::All);
+        let mut handle = self.terminal.lock().unwrap();
+        handle.clear_screen();
     }
 
     pub fn show_cursor(&mut self) {
-        let cursor = self.crossterm.cursor();
-        cursor.show();
+        let mut handle = self.terminal.lock().unwrap();
+        handle.show_cursor();
     }
 
     pub fn hide_cursor(&mut self) {
-        let cursor = self.crossterm.cursor();
-        cursor.hide();
+        let mut handle = self.terminal.lock().unwrap();
+        handle.hide_cursor();
     }
 
     pub fn move_cursor(&mut self, x: usize, y: usize) {
-        let cursor = self.crossterm.cursor();
-        cursor.goto(x as u16, y as u16);
+        let mut handle = self.terminal.lock().unwrap();
+        handle.move_cursor(x, y);
     }
 }
