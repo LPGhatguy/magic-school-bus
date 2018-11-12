@@ -37,7 +37,10 @@ impl TerminalContext {
     }
 
     pub fn read_char(&mut self) -> io::Result<char> {
-        unimplemented!()
+        match self.read_key() {
+            Key::Char(char) => Ok(char),
+            _ => Ok(' '),
+        }
     }
 
     pub fn paint_str(&mut self, text: &str, fg: Color, bg: Color) {
