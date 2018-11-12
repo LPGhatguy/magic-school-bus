@@ -137,7 +137,7 @@ impl State {
     fn perform_find_next(&mut self) {
         let mut found_index = None;
         let first_range = (self.cursor + 1)..self.entries.len();
-        let second_range = 0..self.cursor;
+        let second_range = 0..=self.cursor;
         let iter = first_range.chain(second_range);
 
         for i in iter {
