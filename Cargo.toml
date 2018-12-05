@@ -13,6 +13,6 @@ path = "src/main.rs"
 
 [dependencies]
 clap = "2.32"
-all_term = { path = "../all-term" }
+all_term = { git = "https://github.com/LPGhatguy/all-term.git" }
 crossterm = "0.4.0"
 open = "1.2.2"
