@@ -1,7 +1,7 @@
 [[package]]
 name = "all_term"
 version = "0.1.0"
-source = "git+https://github.com/LPGhatguy/all-term.git#c06016a29817ece063c5f339e507d96a1d835706"
+source = "git+https://github.com/LPGhatguy/all-term.git#0ab92fabbaf14fb2dcd126666da222415b56099b"
 dependencies = [
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
