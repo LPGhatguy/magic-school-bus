@@ -17,8 +17,8 @@ impl TerminalContext {
 
         {
             let mut handle = terminal.lock().unwrap();
-            handle.enable_alternate_screen();
             handle.enable_raw_mode();
+            handle.enable_alternate_screen();
         }
 
         TerminalContext {
