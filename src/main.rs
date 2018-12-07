@@ -1,7 +1,3 @@
-extern crate clap;
-extern crate crossterm;
-extern crate open;
-
 pub mod action;
 pub mod input_state;
 pub mod state;
