@@ -1,6 +1,8 @@
 # Change History
 
 ## master
+- Switched from Crossterm to All-Term for a terminal backend
+	- Arrow keys now work!
 - Changed find mechanics ([#12](https://github.com/LPGhatguy/magic-school-bus/issues/12))
 	- `f` now enters a prompt to enter a file prefix to find
 		- tab cycles options (shift-tab can't work because of library limitations right now)

@@ -4,7 +4,7 @@
 
 Magic School Bus is a terminal UI filesystem browser with Vi-inspired keybindings.
 
-It's an early work in progress, but runs on Windows, MacOS, and Linux!
+It's a work in progress, but runs on Windows, MacOS, and Linux!
 
 ## Installation
 
@@ -12,13 +12,15 @@ It's an early work in progress, but runs on Windows, MacOS, and Linux!
 Pre-built binaries are available on the [GitHub Releases page](https://github.com/LPGhatguy/magic-school-bus/releases).
 
 ### Other Platforms and Rust Developers
-Magic School Bus needs **Rust Beta 1.31** or newer to build since it uses features from the upcoming Rust 2018 Edition. That'll change when the edition reaches stable at the beginning of **December, 2018**!
+Magic School Bus needs **Rust 1.31** or newer to build.
 
-If you already have Rustup installed, you can grab Magic School Bus with:
+If you already have Rust installed, you can grab Magic School Bus with:
 
 ```sh
-rustup install beta
-cargo +beta install magic-school-bus
+cargo install magic-school-bus
+
+# To upgrade, add --force to overwrite your current installation
+cargo install --force magic-school-bus
 ```
 
 ## Usage
@@ -46,15 +48,16 @@ msb --help
 Actions marked with '(repeatable)' can be prefixed by a number, which will repeat the command N times.
 
 - `q`: Exit
-- `j`: Move down in the list (repeatable)
-- `k`: Move up in the list (repeatable)
+- `j` or `<down arrow>`: Move down in the list (repeatable)
+- `k` or `<up arrow>: Move up in the list (repeatable)
 - `g`: Move to the top of the list
 - `G`: Move to the bottom of the list
 - `<return>`: Activate an item in the list
 	- If the item is a folder, it'll become the focus
 	- If the item is a file, it will be opened according to your operating system preferences
-- `f [character]`: Jump to the next entry starting with `[character]` (repeatable)
-- `F [character]`: Jump to the previous entry starting with `[character]` (repeatable)
+- `f`: Find an entry starting with the given input
+	- Use `<tab>` to cycle between options matching the current input
+	- Use `<return>` or `<escape>` to exit find mode
 - `;`: Jump to the next entry matching the most recent find command (repeatable)
 - `,`: Jump to the previous entry matching the most recent find command (repeatable)
 - `n`: Create a new file, prompted for the name
@@ -63,7 +66,7 @@ Actions marked with '(repeatable)' can be prefixed by a number, which will repea
 	- Use `<escape>` to cancel
 - `x`: Prompt to delete the selected entry
 	- Press `y` to confirm or `<escape>` to cancel
-- `r`: Refresh the directory list, useful for when an outside program modifies the directory.
+- `r`: Refresh the directory list, useful for when an outside program modifies the directory
 
 ### Changing shell working directory on exit
 Magic School Bus has a special mode intended to help move your shell to the location you navigated to when you exit!
@@ -73,7 +76,7 @@ Passing `--pwd` will cause the last working directory to be printed to stderr. Y
 The function I have configured in my `.profile` for Bash is:
 
 ```bash
-brw() {
+function brw() {
 	{ error=$(msb --pwd "$@" 2>&1 1>&$out); } {out}>&1
 
 	if [ "$?" -eq 0 ]
