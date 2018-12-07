@@ -1,3 +1,5 @@
+use all_term::Key;
+
 use crate::{
     action::Action,
     terminal_context::TerminalContext,
@@ -71,24 +73,25 @@ impl InputState {
         count
     }
 
-    fn handle_text_key(&mut self, key: char) {
+    fn handle_text_key(&mut self, key: Key) {
         match key {
-            '\u{8}' => {
+            Key::Backspace => {
                 if self.text_buffer.pop().is_some() {
                     self.text_cursor -= 1;
                 }
             },
-            _ => {
-                self.text_buffer.push(key);
+            Key::Char(char) => {
+                self.text_buffer.push(char);
                 self.text_cursor = self.text_buffer.len();
             },
+            _ => {},
         }
     }
 
     fn process_input_internal(&mut self, context: &mut TerminalContext) -> Option<Action> {
-        let key = context.read_char().ok()?;
+        let key = context.read_key();
 
-        if key == '\u{1b}' {
+        if key == Key::Escape {
             self.mode = InputMode::Normal;
             return Some(Action::Cancel);
         }
@@ -96,55 +99,55 @@ impl InputState {
         match self.mode {
             InputMode::Normal => {
                 match key {
-                    'q' => Some(Action::Quit),
-                    '0'...'9' => {
-                        self.repeat_count_buffer.push(key);
+                    Key::Char('q') => Some(Action::Quit),
+                    Key::Char(char @ '0'...'9') => {
+                        self.repeat_count_buffer.push(char);
                         None
                     },
-                    'f' => {
+                    Key::Char('f') => {
                         self.text_cursor = 0;
                         self.text_buffer.clear();
                         self.mode = InputMode::FindPrompt;
 
                         Some(Action::Find(String::new()))
                     },
-                    'n' => {
+                    Key::Char('n') => {
                         self.text_cursor = 0;
                         self.text_buffer.clear();
                         self.mode = InputMode::NewFilePrompt;
                         None
                     },
-                    'N' => {
+                    Key::Char('N') => {
                         self.text_cursor = 0;
                         self.text_buffer.clear();
                         self.mode = InputMode::NewDirectoryPrompt;
                         None
                     },
-                    ':' => {
+                    Key::Char(':') => {
                         self.text_cursor = 0;
                         self.text_buffer.clear();
                         self.mode = InputMode::CommandPrompt;
                         None
                     },
-                    'j' => Some(Action::Down(self.consume_repeat_count())),
-                    'k' => Some(Action::Up(self.consume_repeat_count())),
-                    'g' => Some(Action::Top),
-                    'G' => Some(Action::Bottom),
-                    'r' => Some(Action::Refresh),
-                    'x' => {
+                    Key::Char('j') | Key::Down => Some(Action::Down(self.consume_repeat_count())),
+                    Key::Char('k') | Key::Up => Some(Action::Up(self.consume_repeat_count())),
+                    Key::Char('g') => Some(Action::Top),
+                    Key::Char('G') => Some(Action::Bottom),
+                    Key::Char('r') => Some(Action::Refresh),
+                    Key::Char('x') => {
                         self.repeat_count_buffer.clear();
                         self.mode = InputMode::DeletePrompt;
                         None
                     },
-                    '\r' => Some(Action::Activate),
+                    Key::Char('\r') => Some(Action::Activate),
 
-                    '[' => Some(Action::DebugDumpVisible),
+                    Key::Char('[') => Some(Action::DebugDumpVisible),
                     _ => Some(Action::Unknown(key)),
                 }
             },
             InputMode::DeletePrompt => {
                 match key {
-                    'y' => {
+                    Key::Char('y') => {
                         self.mode = InputMode::Normal;
                         Some(Action::Delete)
                     },
@@ -153,11 +156,11 @@ impl InputState {
             },
             InputMode::FindPrompt => {
                 match key {
-                    '\r' => {
+                    Key::Char('\r') => {
                         self.mode = InputMode::Normal;
                         None
                     },
-                    '\t' => {
+                    Key::Char('\t') => {
                         Some(Action::FindNext)
                     },
                     _ => {
@@ -170,7 +173,7 @@ impl InputState {
             },
             InputMode::CommandPrompt => {
                 match key {
-                    '\r' => {
+                    Key::Char('\r') => {
                         let text: String = self.text_buffer.iter().collect();
                         self.mode = InputMode::Normal;
 
@@ -184,7 +187,7 @@ impl InputState {
             },
             InputMode::NewFilePrompt => {
                 match key {
-                    '\r' => {
+                    Key::Char('\r') => {
                         let text: String = self.text_buffer.iter().collect();
                         self.mode = InputMode::Normal;
 
@@ -198,7 +201,7 @@ impl InputState {
             },
             InputMode::NewDirectoryPrompt => {
                 match key {
-                    '\r' => {
+                    Key::Char('\r') => {
                         let text: String = self.text_buffer.iter().collect();
                         self.mode = InputMode::Normal;
 

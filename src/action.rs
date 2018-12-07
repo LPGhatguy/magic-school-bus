@@ -1,3 +1,5 @@
+use all_term::Key;
+
 /// Describes a complete operation that the user can perform.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
@@ -47,5 +49,5 @@ pub enum Action {
     DebugDumpVisible,
 
     /// A fallback action to indicate to the user why a key doesn't do anything.
-    Unknown(char),
+    Unknown(Key),
 }
