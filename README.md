@@ -49,7 +49,7 @@ Actions marked with '(repeatable)' can be prefixed by a number, which will repea
 
 - `q`: Exit
 - `j` or `<down arrow>`: Move down in the list (repeatable)
-- `k` or `<up arrow>: Move up in the list (repeatable)
+- `k` or `<up arrow>`: Move up in the list (repeatable)
 - `g`: Move to the top of the list
 - `G`: Move to the bottom of the list
 - `<return>`: Activate an item in the list
