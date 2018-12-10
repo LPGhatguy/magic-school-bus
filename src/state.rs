@@ -1,5 +1,3 @@
-use open;
-
 use std::{
     cmp::Ordering,
     fs::{self, File},
