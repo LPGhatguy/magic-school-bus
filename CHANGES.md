@@ -1,7 +1,7 @@
 # Change History
 
 ## master
-* *No changes*
+- Input fields now support arrow keys, making the input cursor more meaningful.
 
 ## 0.6.0
 - Switched from Crossterm to All-Term for a terminal backend

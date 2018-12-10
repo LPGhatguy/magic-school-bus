@@ -76,13 +76,24 @@ impl InputState {
     fn handle_text_key(&mut self, key: Key) {
         match key {
             Key::Backspace => {
-                if self.text_buffer.pop().is_some() {
+                if self.text_cursor > 0 {
+                    self.text_buffer.remove(self.text_cursor - 1);
                     self.text_cursor -= 1;
                 }
             },
             Key::Char(char) => {
-                self.text_buffer.push(char);
-                self.text_cursor = self.text_buffer.len();
+                self.text_buffer.insert(self.text_cursor, char);
+                self.text_cursor += 1;
+            },
+            Key::Left => {
+                if self.text_cursor > 0 {
+                    self.text_cursor -= 1;
+                }
+            },
+            Key::Right => {
+                if self.text_cursor < self.text_buffer.len() {
+                    self.text_cursor += 1;
+                }
             },
             _ => {},
         }
