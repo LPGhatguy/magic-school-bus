@@ -13,5 +13,5 @@ path = "src/main.rs"
 
 [dependencies]
 clap = "2.32"
-all_term = { git = "https://github.com/LPGhatguy/all-term.git" }
+all_term = "0.1.0"
 open = "1.2.2"
