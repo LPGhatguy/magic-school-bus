@@ -56,7 +56,7 @@ impl VirtualScreenBuffer {
     }
 
     pub fn write_str(&mut self, x: usize, y: usize, value: &str) {
-        self.write_str_color(x, y, value, Color::White, Color::Black);
+        self.write_str_color(x, y, value, Color::Reset, Color::Reset);
     }
 
     pub fn write_str_color(&mut self, start_x: usize, start_y: usize, value: &str, fg: Color, bg: Color) {

@@ -13,8 +13,8 @@ pub struct ScreenCell {
 impl Default for ScreenCell {
     fn default() -> ScreenCell {
         ScreenCell {
-            fg: Color::White,
-            bg: Color::Black,
+            fg: Color::Reset,
+            bg: Color::Reset,
             char: ' ',
         }
     }
