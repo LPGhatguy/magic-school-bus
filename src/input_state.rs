@@ -103,8 +103,12 @@ impl InputState {
         let key = context.read_key();
 
         if key == Key::Escape {
-            self.mode = InputMode::Normal;
-            return Some(Action::Cancel);
+            if self.mode == InputMode::Normal {
+                return Some(Action::Cancel);
+            } else {
+                self.mode = InputMode::Normal;
+                return None;
+            }
         }
 
         match self.mode {
@@ -150,6 +154,7 @@ impl InputState {
                         self.mode = InputMode::DeletePrompt;
                         None
                     },
+                    Key::Char(' ') => Some(Action::ToggleSelection),
                     Key::Char('\n') => Some(Action::Activate),
 
                     Key::Char('[') => Some(Action::DebugDumpVisible),

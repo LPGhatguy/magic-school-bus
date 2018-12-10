@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     cmp::Ordering,
     fs::{self, File},
     path::PathBuf,
@@ -46,6 +47,7 @@ pub struct State {
     pub last_action: Option<Action>,
     pub working_directory: PathBuf,
     pub entries: Vec<FileEntry>,
+    pub selected_entries: HashSet<usize>,
     pub cursor: usize,
     pub entry_window_start: usize,
     pub find_target: String,
@@ -58,6 +60,7 @@ impl State {
             last_action: None,
             working_directory: PathBuf::new(),
             entries: Vec::new(),
+            selected_entries: HashSet::new(),
             cursor: 0,
             entry_window_start: 0,
             find_target: String::new(),
@@ -71,6 +74,7 @@ impl State {
 
     fn refresh_working_directory(&mut self) {
         self.entries.clear();
+        self.selected_entries.clear();
 
         if let Some(parent) = self.working_directory.parent() {
             self.entries.push(FileEntry {
@@ -193,6 +197,13 @@ impl State {
             Action::Bottom => {
                 self.cursor = self.entries.len() - 1;
             },
+            Action::ToggleSelection => {
+                if self.selected_entries.contains(&self.cursor) {
+                    self.selected_entries.remove(&self.cursor);
+                } else {
+                    self.selected_entries.insert(self.cursor);
+                }
+            },
             Action::Activate => {
                 let entry = &self.entries[self.cursor];
 
@@ -259,6 +270,9 @@ impl State {
             },
             Action::FindNext => {
                 self.perform_find_next();
+            },
+            Action::Cancel => {
+                self.selected_entries.clear();
             },
             _ => {},
         }

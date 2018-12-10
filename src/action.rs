@@ -21,6 +21,9 @@ pub enum Action {
     /// Moves the cursor to the bottom of the list.
     Bottom,
 
+    /// Selects or unselects the highlighted entry
+    ToggleSelection,
+
     /// Activates the selected entry, opening it according to operating system
     /// preferences.
     Activate,

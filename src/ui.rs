@@ -52,10 +52,17 @@ pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScree
         if index >= window_start && index < window_start + window_size {
             let y = 2 + index - window_start;
 
-            if index == state.cursor {
+            let is_cursor = index == state.cursor;
+            let is_selected = state.selected_entries.contains(&index);
+
+            if is_cursor {
                 screen.write_str_color(2, y, &entry.display, Color::Black, Color::White);
             } else {
                 screen.write_str(2, y, &entry.display);
+            }
+
+            if is_selected {
+                screen.write_str_color(1, y, "#", Color::Cyan, Color::Reset);
             }
         }
     }
