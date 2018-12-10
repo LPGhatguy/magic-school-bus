@@ -139,7 +139,7 @@ impl InputState {
                         self.mode = InputMode::DeletePrompt;
                         None
                     },
-                    Key::Char('\r') => Some(Action::Activate),
+                    Key::Char('\n') => Some(Action::Activate),
 
                     Key::Char('[') => Some(Action::DebugDumpVisible),
                     _ => Some(Action::Unknown(key)),
@@ -156,7 +156,7 @@ impl InputState {
             },
             InputMode::FindPrompt => {
                 match key {
-                    Key::Char('\r') => {
+                    Key::Char('\n') => {
                         self.mode = InputMode::Normal;
                         None
                     },
@@ -173,7 +173,7 @@ impl InputState {
             },
             InputMode::CommandPrompt => {
                 match key {
-                    Key::Char('\r') => {
+                    Key::Char('\n') => {
                         let text: String = self.text_buffer.iter().collect();
                         self.mode = InputMode::Normal;
 
@@ -187,7 +187,7 @@ impl InputState {
             },
             InputMode::NewFilePrompt => {
                 match key {
-                    Key::Char('\r') => {
+                    Key::Char('\n') => {
                         let text: String = self.text_buffer.iter().collect();
                         self.mode = InputMode::Normal;
 
@@ -201,7 +201,7 @@ impl InputState {
             },
             InputMode::NewDirectoryPrompt => {
                 match key {
-                    Key::Char('\r') => {
+                    Key::Char('\n') => {
                         let text: String = self.text_buffer.iter().collect();
                         self.mode = InputMode::Normal;
 
