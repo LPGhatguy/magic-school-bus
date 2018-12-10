@@ -1,6 +1,9 @@
 # Change History
 
 ## master
+* *No changes*
+
+## 0.6.0
 - Switched from Crossterm to All-Term for a terminal backend
 	- Arrow keys now work!
 - Changed find mechanics ([#12](https://github.com/LPGhatguy/magic-school-bus/issues/12))
