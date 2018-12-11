@@ -42,7 +42,7 @@ impl Ord for FileEntry {
 }
 
 #[derive(Debug)]
-pub struct State {
+pub struct AppState {
     pub last_action: Option<Action>,
     pub working_directory: PathBuf,
     pub entries: Vec<FileEntry>,
@@ -52,9 +52,9 @@ pub struct State {
     pub no_find_match: bool,
 }
 
-impl State {
-    pub fn new(start_dir: PathBuf) -> State {
-        let mut state = State {
+impl AppState {
+    pub fn new(start_dir: PathBuf) -> AppState {
+        let mut state = AppState {
             last_action: None,
             working_directory: PathBuf::new(),
             entries: Vec::new(),

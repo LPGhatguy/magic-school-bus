@@ -1,6 +1,6 @@
 pub mod action;
 pub mod input_state;
-pub mod state;
+pub mod app_state;
 pub mod terminal_context;
 pub mod ui;
 pub mod virtual_screen;
@@ -18,7 +18,7 @@ use clap::{App, Arg};
 use crate::{
     action::Action,
     input_state::InputState,
-    state::State,
+    app_state::AppState,
     terminal_context::TerminalContext,
     virtual_screen::VirtualScreen,
 };
@@ -29,7 +29,7 @@ struct AppConfig {
 }
 
 fn start(config: &AppConfig) {
-    let mut state = State::new(config.start_dir.clone());
+    let mut state = AppState::new(config.start_dir.clone());
     let mut input_state = InputState::new();
     let mut context = TerminalContext::init();
     let (width, height) = context.get_terminal_size();

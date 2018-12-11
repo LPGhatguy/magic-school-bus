@@ -1,6 +1,6 @@
 use crate::{
     input_state::{InputState, InputMode},
-    state::State,
+    app_state::AppState,
     virtual_screen::VirtualScreen,
     terminal_context::{Color},
 };
@@ -16,7 +16,7 @@ fn pad_right_with_spaces(text: &mut String, width: usize) {
 }
 
 /// A hack to adjust state to match the screen, used for windowing the list.
-pub fn nudge_state(state: &mut State, screen: &VirtualScreen) {
+pub fn nudge_state(state: &mut AppState, screen: &VirtualScreen) {
     let height = screen.get_size().1;
 
     let max_item_count = height - 4;
@@ -33,7 +33,7 @@ pub fn nudge_state(state: &mut State, screen: &VirtualScreen) {
     }
 }
 
-pub fn render(state: &State, input_state: &InputState, screen: &mut VirtualScreen) {
+pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualScreen) {
     let (width, height) = screen.get_size();
 
     let max_item_count = height - 4;
