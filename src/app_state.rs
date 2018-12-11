@@ -1,7 +1,8 @@
 use std::{
     cmp::Ordering,
+    io,
     fs::{self, File},
-    path::PathBuf,
+    path::{Path, PathBuf},
     thread,
 };
 
@@ -42,46 +43,27 @@ impl Ord for FileEntry {
 }
 
 #[derive(Debug)]
-pub struct AppState {
-    pub last_action: Option<Action>,
-    pub working_directory: PathBuf,
+pub struct FileEntryList {
+    pub directory: PathBuf,
     pub entries: Vec<FileEntry>,
     pub cursor: usize,
-    pub entry_window_start: usize,
-    pub find_target: String,
-    pub no_find_match: bool,
+    pub window_start: usize,
 }
 
-impl AppState {
-    pub fn new(start_dir: PathBuf) -> AppState {
-        let mut state = AppState {
-            last_action: None,
-            working_directory: PathBuf::new(),
-            entries: Vec::new(),
-            cursor: 0,
-            entry_window_start: 0,
-            find_target: String::new(),
-            no_find_match: false,
-        };
+impl FileEntryList {
+    pub fn read(directory: &Path) -> io::Result<FileEntryList> {
+        let mut entries = Vec::new();
 
-        state.set_working_directory(start_dir);
-
-        state
-    }
-
-    fn refresh_working_directory(&mut self) {
-        self.entries.clear();
-
-        if let Some(parent) = self.working_directory.parent() {
-            self.entries.push(FileEntry {
+        if let Some(parent) = directory.parent() {
+            entries.push(FileEntry {
                 kind: FileEntryKind::Parent,
                 display: "..".to_string(),
                 path: parent.to_path_buf(),
             });
         }
 
-        for entry in fs::read_dir(&self.working_directory).unwrap() {
-            let entry = entry.unwrap();
+        for entry in fs::read_dir(&directory)? {
+            let entry = entry?;
             let path = entry.path();
             let mut display = path.file_name().unwrap().to_string_lossy().to_string();
             let mut kind = FileEntryKind::File;
@@ -91,23 +73,53 @@ impl AppState {
                 display.push_str("/");
             }
 
-            self.entries.push(FileEntry {
+            entries.push(FileEntry {
                 kind,
                 display,
                 path,
             });
         }
 
-        self.entries.sort();
-        self.cursor = self.cursor.min(self.entries.len());
+        entries.sort();
+
+        Ok(FileEntryList {
+            directory: directory.to_path_buf(),
+            entries,
+            cursor: 0,
+            window_start: 0,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct AppState {
+    pub last_action: Option<Action>,
+    pub entry_list: FileEntryList,
+    pub find_target: String,
+    pub no_find_match: bool,
+}
+
+impl AppState {
+    pub fn new(start_dir: PathBuf) -> AppState {
+        let entry_list = FileEntryList::read(&start_dir).unwrap();
+
+        AppState {
+            last_action: None,
+            entry_list,
+            find_target: String::new(),
+            no_find_match: false,
+        }
     }
 
-    pub fn set_working_directory(&mut self, path: PathBuf) {
-        self.cursor = 0;
-        self.entry_window_start = 0;
-        self.working_directory = path;
+    fn refresh_working_directory(&mut self) {
+        let mut new_list = FileEntryList::read(&self.entry_list.directory).unwrap();
+        new_list.cursor = self.entry_list.cursor.min(new_list.entries.len());
 
-        self.refresh_working_directory();
+        self.entry_list = new_list;
+    }
+
+    pub fn set_working_directory(&mut self, path: &Path) {
+        self.entry_list = FileEntryList::read(path).unwrap();
     }
 
     pub fn open_file(&self, path: PathBuf) {
@@ -119,13 +131,13 @@ impl AppState {
     }
 
     fn perform_find(&mut self) {
-        let found_index = self.entries
+        let found_index = self.entry_list.entries
             .iter()
             .enumerate()
             .find(|(_, entry)| entry.display.starts_with(&self.find_target));
 
         if let Some((index, _)) = found_index {
-            self.cursor = index;
+            self.entry_list.cursor = index;
             self.no_find_match = false;
         } else {
             self.no_find_match = true;
@@ -134,19 +146,19 @@ impl AppState {
 
     fn perform_find_next(&mut self) {
         let mut found_index = None;
-        let first_range = (self.cursor + 1)..self.entries.len();
-        let second_range = 0..=self.cursor;
+        let first_range = (self.entry_list.cursor + 1)..self.entry_list.entries.len();
+        let second_range = 0..=self.entry_list.cursor;
         let iter = first_range.chain(second_range);
 
         for i in iter {
-            if self.entries[i].display.starts_with(&self.find_target) {
+            if self.entry_list.entries[i].display.starts_with(&self.find_target) {
                 found_index = Some(i);
                 break;
             }
         }
 
         if let Some(index) = found_index {
-            self.cursor = index;
+            self.entry_list.cursor = index;
             self.no_find_match = false;
         } else {
             self.no_find_match = true;
@@ -154,7 +166,7 @@ impl AppState {
     }
 
     fn find_entry_with_file_name(&self, name: &str) -> Option<usize> {
-        self.entries
+        self.entry_list.entries
             .iter()
             .enumerate()
             .find(|(_, entry)| {
@@ -175,30 +187,30 @@ impl AppState {
         match action {
             Action::Up(count) => {
                 for _ in 0..count {
-                    if self.cursor > 0 {
-                        self.cursor -= 1;
+                    if self.entry_list.cursor > 0 {
+                        self.entry_list.cursor -= 1;
                     }
                 }
             },
             Action::Down(count) => {
                 for _ in 0..count {
-                    if self.cursor < self.entries.len() - 1 {
-                        self.cursor += 1;
+                    if self.entry_list.cursor < self.entry_list.entries.len() - 1 {
+                        self.entry_list.cursor += 1;
                     }
                 }
             },
             Action::Top => {
-                self.cursor = 0;
+                self.entry_list.cursor = 0;
             },
             Action::Bottom => {
-                self.cursor = self.entries.len() - 1;
+                self.entry_list.cursor = self.entry_list.entries.len() - 1;
             },
             Action::Activate => {
-                let entry = &self.entries[self.cursor];
+                let entry = &self.entry_list.entries[self.entry_list.cursor];
 
                 match entry.kind {
                     FileEntryKind::Directory | FileEntryKind::Parent => {
-                        self.set_working_directory(entry.path.clone());
+                        self.set_working_directory(&entry.path.clone());
                     },
                     FileEntryKind::File => {
                         self.open_file(entry.path.clone());
@@ -206,7 +218,7 @@ impl AppState {
                 }
             },
             Action::Delete => {
-                let entry = &self.entries[self.cursor];
+                let entry = &self.entry_list.entries[self.entry_list.cursor];
 
                 match entry.kind {
                     FileEntryKind::Directory => {
@@ -223,7 +235,7 @@ impl AppState {
                 self.refresh_working_directory();
             },
             Action::CreateFile(name) => {
-                let path = self.working_directory.join(&name);
+                let path = self.entry_list.directory.join(&name);
                 File::create(path)
                     .expect("Could not create file!");
 
@@ -231,12 +243,12 @@ impl AppState {
 
                 // Move the cursor to highlight the new entry.
                 let new_cursor = self.find_entry_with_file_name(&name)
-                    .unwrap_or(self.cursor);
+                    .unwrap_or(self.entry_list.cursor);
 
-                self.cursor = new_cursor;
+                self.entry_list.cursor = new_cursor;
             },
             Action::CreateDirectory(name) => {
-                let path = self.working_directory.join(&name);
+                let path = self.entry_list.directory.join(&name);
                 fs::create_dir(path)
                     .expect("Could not create directory!");
 
@@ -244,16 +256,16 @@ impl AppState {
 
                 // Move the cursor to highlight the new entry.
                 let new_cursor = self.find_entry_with_file_name(&name)
-                    .unwrap_or(self.cursor);
+                    .unwrap_or(self.entry_list.cursor);
 
-                self.cursor = new_cursor;
+                self.entry_list.cursor = new_cursor;
             },
             Action::Refresh => {
                 self.refresh_working_directory();
             },
             Action::Find(target) => {
                 self.find_target = target;
-                self.cursor = 0;
+                self.entry_list.cursor = 0;
 
                 self.perform_find();
             },

@@ -1,6 +1,6 @@
 use crate::{
     input_state::{InputState, InputMode},
-    app_state::AppState,
+    app_state::{FileEntryList, AppState},
     virtual_screen::VirtualScreen,
     terminal_context::{Color},
 };
@@ -21,65 +21,79 @@ pub fn nudge_state(state: &mut AppState, screen: &VirtualScreen) {
 
     let max_item_count = height - 4;
 
-    let window_top = state.entry_window_start;
-    let window_bottom = state.entry_window_start + max_item_count;
+    let window_top = state.entry_list.window_start;
+    let window_bottom = state.entry_list.window_start + max_item_count;
 
-    if state.cursor <= window_top {
-        state.entry_window_start = state.cursor;
+    if state.entry_list.cursor <= window_top {
+        state.entry_list.window_start = state.entry_list.cursor;
     }
 
-    if state.cursor >= window_bottom {
-        state.entry_window_start = state.cursor - max_item_count + 1;
+    if state.entry_list.cursor >= window_bottom {
+        state.entry_list.window_start = state.entry_list.cursor - max_item_count + 1;
     }
 }
 
-pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualScreen) {
-    let (width, height) = screen.get_size();
+fn render_entry_list(entry_list: &FileEntryList, position: (usize, usize), max_size: (usize, usize), screen: &mut VirtualScreen) {
+    let (list_x, list_y) = position;
 
-    let max_item_count = height - 4;
-    let window_start = state.entry_window_start;
-    let window_size = max_item_count.min(state.entries.len() - window_start);
+    let max_item_count = max_size.1 - 2;
+    let window_start = entry_list.window_start;
+    let window_size = max_item_count
+        .min(entry_list.entries.len() - window_start)
+        .min(max_size.1);
 
-    let mut working_dir_text = format!("{}", state.working_directory.display());
-    pad_right_with_spaces(&mut working_dir_text, width);
-    screen.write_str_color(0, 0, &working_dir_text, Color::Black, Color::White);
+    let mut list_width = 0;
 
-    let mut widest_entry_width = 0;
-
-    for (index, entry) in state.entries.iter().enumerate() {
-        widest_entry_width = widest_entry_width.max(entry.display.chars().count());
+    for (index, entry) in entry_list.entries.iter().enumerate() {
+        list_width = list_width
+            .max(entry.display.chars().count())
+            .min(max_size.0);
 
         if index >= window_start && index < window_start + window_size {
-            let y = 2 + index - window_start;
+            let x = list_x + 2;
+            let y = list_y + 1 + index - window_start;
 
-            if index == state.cursor {
-                screen.write_str_color(2, y, &entry.display, Color::Black, Color::White);
+            let (fg, bg) = if index == entry_list.cursor {
+                (Color::Black, Color::White)
             } else {
-                screen.write_str(2, y, &entry.display);
-            }
+                (Color::Reset, Color::Reset)
+            };
+
+            screen.write_str_color(x, y, &entry.display, fg, bg);
         }
     }
 
     // Draw a border around all the entries
-    let end_of_list_line = "-".repeat(widest_entry_width + 4);
-    let more_list_line = "~".repeat(widest_entry_width + 4);
+    let end_of_list_line = "-".repeat(list_width + 4);
+    let more_list_line = "~".repeat(list_width + 4);
 
     let top_line = if window_start > 0 {
         &more_list_line
     } else {
         &end_of_list_line
     };
-    let bottom_line = if window_start + window_size < state.entries.len() {
+
+    let bottom_line = if window_start + window_size < entry_list.entries.len() {
         &more_list_line
     } else {
         &end_of_list_line
     };
 
     let entry_vertical_line = "|\n".repeat(window_size);
-    screen.write_str(0, 2, &entry_vertical_line);
-    screen.write_str(widest_entry_width + 3, 2, &entry_vertical_line);
-    screen.write_str(0, 1, top_line);
-    screen.write_str(0, 2 + window_size, bottom_line);
+    screen.write_str(list_x, list_y + 1, &entry_vertical_line);
+    screen.write_str(list_x + list_width + 3, list_y + 1, &entry_vertical_line);
+    screen.write_str(list_x, list_y, top_line);
+    screen.write_str(list_x, list_y + window_size + 1, bottom_line);
+}
+
+pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualScreen) {
+    let (width, height) = screen.get_size();
+
+    let mut working_dir_text = format!("{}", state.entry_list.directory.display());
+    pad_right_with_spaces(&mut working_dir_text, width);
+    screen.write_str_color(0, 0, &working_dir_text, Color::Black, Color::White);
+
+    render_entry_list(&state.entry_list, (0, 1), (width, height - 2), screen);
 
     let mut prompt_foreground = Color::Black;
     let mut prompt_background = Color::White;

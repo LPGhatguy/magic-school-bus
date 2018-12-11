@@ -57,7 +57,7 @@ fn start(config: &AppConfig) {
     drop(context);
 
     if config.print_working_directory {
-        eprintln!("{}", state.working_directory.display());
+        eprintln!("{}", state.entry_list.directory.display());
     }
 }
 
