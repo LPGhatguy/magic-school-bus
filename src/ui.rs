@@ -1,6 +1,6 @@
 use crate::{
     input_state::{InputState, InputMode},
-    app_state::{FileEntryList, AppState},
+    app_state::{DirectoryListState, AppState},
     virtual_screen::VirtualScreen,
     terminal_context::{Color},
 };
@@ -33,7 +33,7 @@ pub fn nudge_state(state: &mut AppState, screen: &VirtualScreen) {
     }
 }
 
-fn render_entry_list(entry_list: &FileEntryList, position: (usize, usize), max_size: (usize, usize), screen: &mut VirtualScreen) {
+fn render_entry_list(entry_list: &DirectoryListState, position: (usize, usize), max_size: (usize, usize), screen: &mut VirtualScreen) {
     let (list_x, list_y) = position;
 
     let max_item_count = max_size.1 - 2;

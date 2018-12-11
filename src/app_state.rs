@@ -43,15 +43,15 @@ impl Ord for FileEntry {
 }
 
 #[derive(Debug)]
-pub struct FileEntryList {
+pub struct DirectoryListState {
     pub directory: PathBuf,
     pub entries: Vec<FileEntry>,
     pub cursor: usize,
     pub window_start: usize,
 }
 
-impl FileEntryList {
-    pub fn read(directory: &Path) -> io::Result<FileEntryList> {
+impl DirectoryListState {
+    pub fn read(directory: &Path) -> io::Result<DirectoryListState> {
         let mut entries = Vec::new();
 
         if let Some(parent) = directory.parent() {
@@ -82,26 +82,38 @@ impl FileEntryList {
 
         entries.sort();
 
-        Ok(FileEntryList {
+        Ok(DirectoryListState {
             directory: directory.to_path_buf(),
             entries,
             cursor: 0,
             window_start: 0,
         })
     }
+
+    pub fn cursor_up(&mut self) {
+        if self.cursor > 0 {
+            self.cursor -= 1;
+        }
+    }
+
+    pub fn cursor_down(&mut self) {
+        if self.cursor < self.entries.len() - 1 {
+            self.cursor += 1;
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct AppState {
     pub last_action: Option<Action>,
-    pub entry_list: FileEntryList,
+    pub entry_list: DirectoryListState,
     pub find_target: String,
     pub no_find_match: bool,
 }
 
 impl AppState {
     pub fn new(start_dir: PathBuf) -> AppState {
-        let entry_list = FileEntryList::read(&start_dir).unwrap();
+        let entry_list = DirectoryListState::read(&start_dir).unwrap();
 
         AppState {
             last_action: None,
@@ -112,14 +124,14 @@ impl AppState {
     }
 
     fn refresh_working_directory(&mut self) {
-        let mut new_list = FileEntryList::read(&self.entry_list.directory).unwrap();
+        let mut new_list = DirectoryListState::read(&self.entry_list.directory).unwrap();
         new_list.cursor = self.entry_list.cursor.min(new_list.entries.len());
 
         self.entry_list = new_list;
     }
 
     pub fn set_working_directory(&mut self, path: &Path) {
-        self.entry_list = FileEntryList::read(path).unwrap();
+        self.entry_list = DirectoryListState::read(path).unwrap();
     }
 
     pub fn open_file(&self, path: PathBuf) {
@@ -187,16 +199,12 @@ impl AppState {
         match action {
             Action::Up(count) => {
                 for _ in 0..count {
-                    if self.entry_list.cursor > 0 {
-                        self.entry_list.cursor -= 1;
-                    }
+                    self.entry_list.cursor_up();
                 }
             },
             Action::Down(count) => {
                 for _ in 0..count {
-                    if self.entry_list.cursor < self.entry_list.entries.len() - 1 {
-                        self.entry_list.cursor += 1;
-                    }
+                    self.entry_list.cursor_down();
                 }
             },
             Action::Top => {
