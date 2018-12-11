@@ -9,6 +9,29 @@ use crate::{
     action::Action,
 };
 
+/// Magic School Bus is loosely modal. AppMode is the value that determines what
+/// keys map to what actions.
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum AppMode {
+    /// The mode from which most commands are started.
+    Normal,
+
+    /// The user is entering a search string to find files.
+    FindPrompt,
+
+    /// The user is being prompted to delete one or more entries.
+    DeletePrompt,
+
+    /// The user is entering a name for a new file.
+    NewFilePrompt,
+
+    /// The user is entering a name for a new directory.
+    NewDirectoryPrompt,
+
+    /// The user is entering a command to run.
+    CommandPrompt,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum FileEntryKind {
     Parent,
@@ -43,6 +66,8 @@ impl Ord for FileEntry {
 
 #[derive(Debug)]
 pub struct State {
+    pub mode: AppMode,
+
     pub last_action: Option<Action>,
     pub working_directory: PathBuf,
     pub entries: Vec<FileEntry>,
@@ -50,11 +75,17 @@ pub struct State {
     pub entry_window_start: usize,
     pub find_target: String,
     pub no_find_match: bool,
+
+    pub repeat_count_buffer: String,
+    pub text_input_buffer: Vec<char>,
+    pub text_input_cursor: usize,
 }
 
 impl State {
     pub fn new(start_dir: PathBuf) -> State {
         let mut state = State {
+            mode: AppMode::Normal,
+
             last_action: None,
             working_directory: PathBuf::new(),
             entries: Vec::new(),
@@ -62,6 +93,10 @@ impl State {
             entry_window_start: 0,
             find_target: String::new(),
             no_find_match: false,
+
+            repeat_count_buffer: String::new(),
+            text_input_buffer: Vec::new(),
+            text_input_cursor: 0,
         };
 
         state.set_working_directory(start_dir);
