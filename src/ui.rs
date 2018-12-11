@@ -64,6 +64,7 @@ fn render_entry_list(entry_list: &DirectoryListState, position: (usize, usize), 
     }
 
     // Draw a border around all the entries
+    let entry_vertical_line = "|\n".repeat(window_size);
     let end_of_list_line = "-".repeat(list_width + 4);
     let more_list_line = "~".repeat(list_width + 4);
 
@@ -79,7 +80,6 @@ fn render_entry_list(entry_list: &DirectoryListState, position: (usize, usize), 
         &end_of_list_line
     };
 
-    let entry_vertical_line = "|\n".repeat(window_size);
     screen.write_str(list_x, list_y + 1, &entry_vertical_line);
     screen.write_str(list_x + list_width + 3, list_y + 1, &entry_vertical_line);
     screen.write_str(list_x, list_y, top_line);
