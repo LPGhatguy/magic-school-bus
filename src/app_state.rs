@@ -41,6 +41,18 @@ impl Ord for FileEntry {
     }
 }
 
+// TODO: Make this a configurable setting
+pub fn find_should_match(entry_display: &str, find_target: &str) -> bool {
+    if find_target.is_empty() {
+        return false;
+    }
+
+    let entry_lower = entry_display.to_lowercase();
+    let find_lower = find_target.to_lowercase();
+
+    entry_lower.starts_with(&find_lower)
+}
+
 #[derive(Debug)]
 pub struct AppState {
     pub last_action: Option<Action>,
@@ -119,10 +131,14 @@ impl AppState {
     }
 
     fn perform_find(&mut self) {
+        if self.find_target.is_empty() {
+            return;
+        }
+
         let found_index = self.entries
             .iter()
             .enumerate()
-            .find(|(_, entry)| entry.display.starts_with(&self.find_target));
+            .find(|(_, entry)| find_should_match(&entry.display, &self.find_target));
 
         if let Some((index, _)) = found_index {
             self.cursor = index;
@@ -139,7 +155,7 @@ impl AppState {
         let iter = first_range.chain(second_range);
 
         for i in iter {
-            if self.entries[i].display.starts_with(&self.find_target) {
+            if find_should_match(&self.entries[i].display, &self.find_target) {
                 found_index = Some(i);
                 break;
             }
@@ -253,7 +269,6 @@ impl AppState {
             },
             Action::Find(target) => {
                 self.find_target = target;
-                self.cursor = 0;
 
                 self.perform_find();
             },

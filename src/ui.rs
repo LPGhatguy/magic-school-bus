@@ -1,6 +1,6 @@
 use crate::{
     input_state::{InputState, InputMode},
-    app_state::AppState,
+    app_state::{AppState, find_should_match},
     virtual_screen::VirtualScreen,
     terminal_context::{Color},
 };
@@ -52,10 +52,35 @@ pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualSc
         if index >= window_start && index < window_start + window_size {
             let y = 2 + index - window_start;
 
-            if index == state.cursor {
-                screen.write_str_color(2, y, &entry.display, Color::Black, Color::White);
-            } else {
-                screen.write_str(2, y, &entry.display);
+            enum Highlight {
+                Cursor,
+                Match,
+                None,
+            }
+
+            let highlight = match input_state.get_mode() {
+                InputMode::FindPrompt => {
+                    if index == state.cursor {
+                        Highlight::Cursor
+                    } else if find_should_match(&entry.display, &state.find_target) {
+                        Highlight::Match
+                    } else {
+                        Highlight::None
+                    }
+                },
+                _ => {
+                    if index == state.cursor {
+                        Highlight::Cursor
+                    } else {
+                        Highlight::None
+                    }
+                },
+            };
+
+            match highlight {
+                Highlight::Cursor => screen.write_str_color(2, y, &entry.display, Color::Black, Color::White),
+                Highlight::Match => screen.write_str_color(2, y, &entry.display, Color::Black, Color::Yellow),
+                Highlight::None => screen.write_str(2, y, &entry.display),
             }
         }
     }

@@ -1,6 +1,9 @@
 # Change History
 
 ## master
+- Find is now case-insensitive, using Unicode casing rules
+	- In the future, this will become a configurable setting
+- When in find mode, matches will be highlighted in yellow
 - Input fields now support arrow keys, making the input cursor more meaningful.
 
 ## 0.6.0
