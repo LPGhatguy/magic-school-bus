@@ -58,8 +58,6 @@ Actions marked with '(repeatable)' can be prefixed by a number, which will repea
 - `f`: Find an entry starting with the given input
 	- Use `<tab>` to cycle between options matching the current input
 	- Use `<return>` or `<escape>` to exit find mode
-- `;`: Jump to the next entry matching the most recent find command (repeatable)
-- `,`: Jump to the previous entry matching the most recent find command (repeatable)
 - `n`: Create a new file, prompted for the name
 	- Use `<escape>` to cancel
 - `N`: Create a new directory, prompted for the name
