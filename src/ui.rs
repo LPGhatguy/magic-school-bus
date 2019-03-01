@@ -15,8 +15,9 @@ fn pad_right_with_spaces(text: &mut String, width: usize) {
     }
 }
 
-/// A hack to adjust state to match the screen, used for windowing the list.
-pub fn nudge_state(state: &mut AppState, screen: &VirtualScreen) {
+/// Ensures that the cursor is always on-screen by adjusting the state's
+/// windowing parameters based on the screen size.
+pub fn adjust_entry_window(state: &mut AppState, screen: &VirtualScreen) {
     let height = screen.get_size().1;
 
     let max_item_count = height - 4;

@@ -36,7 +36,7 @@ fn start(config: &AppConfig) {
     let mut screen = VirtualScreen::new(width, height);
 
     loop {
-        ui::nudge_state(&mut state, &screen);
+        ui::adjust_entry_window(&mut state, &screen);
         screen.render_prepare(&context);
         ui::render(&state, &input_state, &mut screen);
         screen.commit(&mut context);
