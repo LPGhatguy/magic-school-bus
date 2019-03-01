@@ -34,7 +34,8 @@ pub enum Action {
     /// Creates a directory here.
     CreateDirectory(String),
 
-    /// Refreshes the directory view.
+    /// Refreshes the entire application view, including refreshing the output
+    /// and the directories being browsed.
     Refresh,
 
     Find(String),
