@@ -1,6 +1,8 @@
 # Change History
 
 ## master
+
+## 0.7.0 (2019-03-01)
 - Find is now case-insensitive, using Unicode casing rules
 	- In the future, this will become a configurable setting
 - When in find mode, matches will be highlighted in yellow
