@@ -5,6 +5,7 @@
 	- In the future, this will become a configurable setting
 - When in find mode, matches will be highlighted in yellow
 - Input fields now support arrow keys, making the input cursor more meaningful.
+- 'Refresh' action (`r`) now redraws entire terminal window, useful for when something gets messed up visually.
 
 ## 0.6.0
 - Switched from Crossterm to All-Term for a terminal backend

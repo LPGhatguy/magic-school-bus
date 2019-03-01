@@ -42,12 +42,11 @@ fn start(config: &AppConfig) {
         screen.commit(&mut context);
 
         if let Some(action) = input_state.process_input(&mut context) {
-            if action == Action::Quit {
-                break;
-            }
-
-            if action == Action::DebugDumpVisible {
-                eprintln!("{}", screen.show_current_buffer());
+            match action {
+                Action::Quit => break,
+                Action::DebugDumpVisible => eprintln!("{}", screen.show_current_buffer()),
+                Action::Refresh => screen.refresh(),
+                _ => {},
             }
 
             state.process_action(action);

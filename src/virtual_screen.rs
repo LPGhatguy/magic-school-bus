@@ -133,6 +133,13 @@ impl VirtualScreen {
         }
     }
 
+    /// Should be set when the screen gets into a bad state, which shouldn't
+    /// happen in theory but can happen in practice if the terminal emulator
+    /// does something we don't expect.
+    pub fn refresh(&mut self) {
+        self.should_redraw_everything = true;
+    }
+
     pub fn show_current_buffer(&self) -> String {
         self.current_buffer.show()
     }
