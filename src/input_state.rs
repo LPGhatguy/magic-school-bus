@@ -115,7 +115,7 @@ impl InputState {
                         self.repeat_count_buffer.push(char);
                         None
                     },
-                    Key::Char('f') => {
+                    Key::Char('f') | Key::Char('/') => {
                         self.text_cursor = 0;
                         self.text_buffer.clear();
                         self.mode = InputMode::FindPrompt;

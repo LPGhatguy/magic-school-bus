@@ -1,6 +1,7 @@
 # Change History
 
-## master
+## Unreleased Changes
+- `/` now activates find mode, as an alias for `f`
 
 ## 0.7.0 (2019-03-01)
 - Find is now case-insensitive, using Unicode casing rules
