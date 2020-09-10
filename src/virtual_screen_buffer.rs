@@ -1,7 +1,4 @@
-use crate::{
-    virtual_screen::ScreenCell,
-    terminal_context::Color,
-};
+use crate::{terminal_context::Color, virtual_screen::ScreenCell};
 
 #[derive(Debug, Clone)]
 pub struct VirtualScreenBuffer {
@@ -41,7 +38,10 @@ impl VirtualScreenBuffer {
 
     pub fn set_block(&mut self, x: usize, y: usize, block: ScreenCell) {
         if x >= self.width || y >= self.height {
-            panic!("Could not write ({}, {}) on screen size ({}, {})", x, y, self.width, self.height);
+            panic!(
+                "Could not write ({}, {}) on screen size ({}, {})",
+                x, y, self.width, self.height
+            );
         }
 
         self.data[x + y * self.width] = block;
@@ -49,7 +49,10 @@ impl VirtualScreenBuffer {
 
     pub fn get_block(&self, x: usize, y: usize) -> ScreenCell {
         if x >= self.width || y >= self.height {
-            panic!("Could not read ({}, {}) on screen size ({}, {})", x, y, self.width, self.height);
+            panic!(
+                "Could not read ({}, {}) on screen size ({}, {})",
+                x, y, self.width, self.height
+            );
         }
 
         self.data[x + y * self.width]
@@ -59,7 +62,14 @@ impl VirtualScreenBuffer {
         self.write_str_color(x, y, value, Color::Reset, Color::Reset);
     }
 
-    pub fn write_str_color(&mut self, start_x: usize, start_y: usize, value: &str, fg: Color, bg: Color) {
+    pub fn write_str_color(
+        &mut self,
+        start_x: usize,
+        start_y: usize,
+        value: &str,
+        fg: Color,
+        bg: Color,
+    ) {
         let mut x = start_x;
         let mut y = start_y;
 
@@ -72,11 +82,7 @@ impl VirtualScreenBuffer {
                 y += 1;
                 x = start_x;
             } else {
-                self.set_block(x, y, ScreenCell {
-                    fg,
-                    bg,
-                    char,
-                });
+                self.set_block(x, y, ScreenCell { fg, bg, char });
 
                 x += 1;
             }

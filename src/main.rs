@@ -1,26 +1,18 @@
 pub mod action;
-pub mod input_state;
 pub mod app_state;
+pub mod input_state;
 pub mod terminal_context;
 pub mod ui;
 pub mod virtual_screen;
 pub mod virtual_screen_buffer;
 
-use std::{
-    env,
-    panic,
-    process,
-    path::PathBuf,
-};
+use std::{env, panic, path::PathBuf, process};
 
 use clap::{App, Arg};
 
 use crate::{
-    action::Action,
-    input_state::InputState,
-    app_state::AppState,
-    terminal_context::TerminalContext,
-    virtual_screen::VirtualScreen,
+    action::Action, app_state::AppState, input_state::InputState,
+    terminal_context::TerminalContext, virtual_screen::VirtualScreen,
 };
 
 struct AppConfig {
@@ -46,7 +38,7 @@ fn start(config: &AppConfig) {
                 Action::Quit => break,
                 Action::DebugDumpVisible => eprintln!("{}", screen.show_current_buffer()),
                 Action::Refresh => screen.refresh(),
-                _ => {},
+                _ => {}
             }
 
             state.process_action(action);
@@ -65,15 +57,16 @@ fn main() {
         .author(env!("CARGO_PKG_AUTHORS"))
         .version(env!("CARGO_PKG_VERSION"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
-
-        .arg(Arg::with_name("START_DIR")
-            .help("The directory to start in, defaulting to the current working directory.")
-            .index(1))
-
-        .arg(Arg::with_name("pwd")
-            .long("pwd")
-            .help("Prints the current directory to stderr when closing."))
-
+        .arg(
+            Arg::with_name("START_DIR")
+                .help("The directory to start in, defaulting to the current working directory.")
+                .index(1),
+        )
+        .arg(
+            Arg::with_name("pwd")
+                .long("pwd")
+                .help("Prints the current directory to stderr when closing."),
+        )
         .get_matches();
 
     let start_dir = match matches.value_of("START_DIR") {

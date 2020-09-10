@@ -1,8 +1,8 @@
 use crate::{
-    input_state::{InputState, InputMode},
-    app_state::{AppState, find_should_match},
+    app_state::{find_should_match, AppState},
+    input_state::{InputMode, InputState},
+    terminal_context::Color,
     virtual_screen::VirtualScreen,
-    terminal_context::{Color},
 };
 
 fn pad_right_with_spaces(text: &mut String, width: usize) {
@@ -68,19 +68,23 @@ pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualSc
                     } else {
                         Highlight::None
                     }
-                },
+                }
                 _ => {
                     if index == state.cursor {
                         Highlight::Cursor
                     } else {
                         Highlight::None
                     }
-                },
+                }
             };
 
             match highlight {
-                Highlight::Cursor => screen.write_str_color(2, y, &entry.display, Color::Black, Color::White),
-                Highlight::Match => screen.write_str_color(2, y, &entry.display, Color::Black, Color::Yellow),
+                Highlight::Cursor => {
+                    screen.write_str_color(2, y, &entry.display, Color::Black, Color::White)
+                }
+                Highlight::Match => {
+                    screen.write_str_color(2, y, &entry.display, Color::Black, Color::Yellow)
+                }
                 Highlight::None => screen.write_str(2, y, &entry.display),
             }
         }
@@ -118,7 +122,7 @@ pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualSc
             match &state.last_action {
                 Some(last_action) => {
                     status_bar_text.push_str(&format!("{:?}", last_action));
-                },
+                }
                 None => status_bar_text.push_str("None"),
             };
 
@@ -126,10 +130,10 @@ pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualSc
                 status_bar_text.push_str(" | ");
                 status_bar_text.push_str(count);
             }
-        },
+        }
         InputMode::DeletePrompt => {
             status_bar_text.push_str("Are you sure you want to delete selected? (y or escape)")
-        },
+        }
         InputMode::FindPrompt => {
             let prompt_string = "Find: ";
             status_bar_text.push_str(prompt_string);
@@ -143,8 +147,11 @@ pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualSc
                 prompt_background = Color::Red;
             }
 
-            screen.set_cursor_position(prompt_string.len() + input_state.get_cursor_position(), height - 1);
-        },
+            screen.set_cursor_position(
+                prompt_string.len() + input_state.get_cursor_position(),
+                height - 1,
+            );
+        }
         InputMode::CommandPrompt => {
             status_bar_text.push(':');
 
@@ -153,7 +160,7 @@ pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualSc
             }
 
             screen.set_cursor_position(1 + input_state.get_cursor_position(), height - 1);
-        },
+        }
         InputMode::NewFilePrompt => {
             let prompt_string = "New file: ";
             status_bar_text.push_str(prompt_string);
@@ -162,8 +169,11 @@ pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualSc
                 status_bar_text.push(char);
             }
 
-            screen.set_cursor_position(prompt_string.len() + input_state.get_cursor_position(), height - 1);
-        },
+            screen.set_cursor_position(
+                prompt_string.len() + input_state.get_cursor_position(),
+                height - 1,
+            );
+        }
         InputMode::NewDirectoryPrompt => {
             let prompt_string = "New dir: ";
             status_bar_text.push_str(prompt_string);
@@ -172,10 +182,19 @@ pub fn render(state: &AppState, input_state: &InputState, screen: &mut VirtualSc
                 status_bar_text.push(char);
             }
 
-            screen.set_cursor_position(prompt_string.len() + input_state.get_cursor_position(), height - 1);
-        },
+            screen.set_cursor_position(
+                prompt_string.len() + input_state.get_cursor_position(),
+                height - 1,
+            );
+        }
     }
 
     pad_right_with_spaces(&mut status_bar_text, width);
-    screen.write_str_color(0, height - 1, &status_bar_text, prompt_foreground, prompt_background);
+    screen.write_str_color(
+        0,
+        height - 1,
+        &status_bar_text,
+        prompt_foreground,
+        prompt_background,
+    );
 }

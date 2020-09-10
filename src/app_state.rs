@@ -5,9 +5,7 @@ use std::{
     thread,
 };
 
-use crate::{
-    action::Action,
-};
+use crate::action::Action;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum FileEntryKind {
@@ -36,7 +34,10 @@ impl Ord for FileEntry {
             (_, FileEntryKind::Parent) => Ordering::Greater,
             (FileEntryKind::Directory, FileEntryKind::File) => Ordering::Less,
             (FileEntryKind::File, FileEntryKind::Directory) => Ordering::Greater,
-            _ => self.display.to_lowercase().cmp(&other.display.to_lowercase()),
+            _ => self
+                .display
+                .to_lowercase()
+                .cmp(&other.display.to_lowercase()),
         }
     }
 }
@@ -135,7 +136,8 @@ impl AppState {
             return;
         }
 
-        let found_index = self.entries
+        let found_index = self
+            .entries
             .iter()
             .enumerate()
             .find(|(_, entry)| find_should_match(&entry.display, &self.find_target));
@@ -173,14 +175,12 @@ impl AppState {
         self.entries
             .iter()
             .enumerate()
-            .find(|(_, entry)| {
-                match entry.path.file_name() {
-                    Some(file_name) => match file_name.to_str() {
-                        Some(file_name) => file_name == name,
-                        None => false,
-                    },
+            .find(|(_, entry)| match entry.path.file_name() {
+                Some(file_name) => match file_name.to_str() {
+                    Some(file_name) => file_name == name,
                     None => false,
-                }
+                },
+                None => false,
             })
             .map(|(index, _)| index)
     }
@@ -195,32 +195,32 @@ impl AppState {
                         self.cursor -= 1;
                     }
                 }
-            },
+            }
             Action::Down(count) => {
                 for _ in 0..count {
                     if self.cursor < self.entries.len() - 1 {
                         self.cursor += 1;
                     }
                 }
-            },
+            }
             Action::Top => {
                 self.cursor = 0;
-            },
+            }
             Action::Bottom => {
                 self.cursor = self.entries.len() - 1;
-            },
+            }
             Action::Activate => {
                 let entry = &self.entries[self.cursor];
 
                 match entry.kind {
                     FileEntryKind::Directory | FileEntryKind::Parent => {
                         self.set_working_directory(entry.path.clone());
-                    },
+                    }
                     FileEntryKind::File => {
                         self.open_file(entry.path.clone());
-                    },
+                    }
                 }
-            },
+            }
             Action::Delete => {
                 let entry = &self.entries[self.cursor];
 
@@ -228,54 +228,49 @@ impl AppState {
                     FileEntryKind::Directory => {
                         fs::remove_dir_all(&entry.path)
                             .expect("Could not remove directory and its contents!");
-                    },
+                    }
                     FileEntryKind::File => {
-                        fs::remove_file(&entry.path)
-                            .expect("Could not remove file!");
-                    },
-                    FileEntryKind::Parent => {},
+                        fs::remove_file(&entry.path).expect("Could not remove file!");
+                    }
+                    FileEntryKind::Parent => {}
                 }
 
                 self.refresh_working_directory();
-            },
+            }
             Action::CreateFile(name) => {
                 let path = self.working_directory.join(&name);
-                File::create(path)
-                    .expect("Could not create file!");
+                File::create(path).expect("Could not create file!");
 
                 self.refresh_working_directory();
 
                 // Move the cursor to highlight the new entry.
-                let new_cursor = self.find_entry_with_file_name(&name)
-                    .unwrap_or(self.cursor);
+                let new_cursor = self.find_entry_with_file_name(&name).unwrap_or(self.cursor);
 
                 self.cursor = new_cursor;
-            },
+            }
             Action::CreateDirectory(name) => {
                 let path = self.working_directory.join(&name);
-                fs::create_dir(path)
-                    .expect("Could not create directory!");
+                fs::create_dir(path).expect("Could not create directory!");
 
                 self.refresh_working_directory();
 
                 // Move the cursor to highlight the new entry.
-                let new_cursor = self.find_entry_with_file_name(&name)
-                    .unwrap_or(self.cursor);
+                let new_cursor = self.find_entry_with_file_name(&name).unwrap_or(self.cursor);
 
                 self.cursor = new_cursor;
-            },
+            }
             Action::Refresh => {
                 self.refresh_working_directory();
-            },
+            }
             Action::Find(target) => {
                 self.find_target = target;
 
                 self.perform_find();
-            },
+            }
             Action::FindNext => {
                 self.perform_find_next();
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }

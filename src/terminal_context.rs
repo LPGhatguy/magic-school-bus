@@ -1,6 +1,6 @@
 use std::{
-    sync::{Arc, Mutex},
     io,
+    sync::{Arc, Mutex},
 };
 
 use all_term::{terminal, Style, Terminal};
@@ -21,9 +21,7 @@ impl TerminalContext {
             handle.enable_alternate_screen();
         }
 
-        TerminalContext {
-            terminal,
-        }
+        TerminalContext { terminal }
     }
 
     pub fn get_terminal_size(&self) -> (usize, usize) {
